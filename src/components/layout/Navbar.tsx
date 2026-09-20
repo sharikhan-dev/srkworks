@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ArrowUpRight, Shield } from 'lucide-react';
+import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { NavbarSettings, SiteSettings } from '../../types';
 
 interface NavbarProps {
@@ -14,6 +14,8 @@ interface NavbarProps {
 export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmin }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoTapCount, setLogoTapCount] = useState(0);
+  const logoTapTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,6 +70,27 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
     setMobileMenuOpen(false);
   };
 
+  // Secret 5-tap gesture on brand logo to open Admin console
+  const handleBrandClick = () => {
+    setLogoTapCount((prev) => {
+      const nextCount = prev + 1;
+      if (nextCount >= 5) {
+        if (onOpenAdmin) onOpenAdmin();
+        return 0;
+      }
+      return nextCount;
+    });
+
+    if (logoTapTimerRef.current) {
+      clearTimeout(logoTapTimerRef.current);
+    }
+    logoTapTimerRef.current = setTimeout(() => {
+      setLogoTapCount(0);
+    }, 2500);
+
+    handleItemClick('hero');
+  };
+
   return (
     <>
       <header
@@ -82,10 +105,10 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
               : 'glass-surface border border-white/[0.08]'
           }`}
         >
-          {/* Left: Personal Wordmark & Logo Initial */}
+          {/* Left: Personal Wordmark & Logo Initial (Tap 5x secretly opens Admin) */}
           <button
             id="nav-brand-logo"
-            onClick={() => handleItemClick('hero')}
+            onClick={handleBrandClick}
             className="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer"
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-white/30 via-white/80 to-white flex items-center justify-center p-[1px] shadow-sm overflow-hidden shrink-0">
@@ -148,17 +171,8 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
             </button>
           </div>
 
-          {/* Mobile Right Controls: Quick Admin Shield Button + Hamburger */}
-          <div className="md:hidden flex items-center gap-1.5">
-            <button
-              onClick={onOpenAdmin}
-              aria-label="Open Admin Console"
-              title="Admin Console"
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <Shield className="w-3.5 h-3.5" />
-            </button>
-
+          {/* Mobile Right Controls: Hamburger Menu */}
+          <div className="md:hidden flex items-center">
             <button
               id="mobile-menu-trigger"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -208,24 +222,12 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
                 })}
               </div>
 
-              <div className="space-y-3 pt-6 border-t border-white/10 mt-6">
+              <div className="pt-6 border-t border-white/10 mt-6">
                 <button
                   onClick={() => handleItemClick(ctaUrl)}
                   className="w-full py-3.5 text-sm font-bold text-black bg-white rounded-2xl text-center shadow-lg cursor-pointer active:scale-98 transition-transform"
                 >
                   {ctaText}
-                </button>
-
-                {/* Direct Admin Console Access on Mobile */}
-                <button
-                  onClick={() => handleItemClick('#admin')}
-                  className="w-full py-2.5 px-4 rounded-xl text-xs font-mono text-neutral-400 hover:text-white hover:bg-white/5 flex items-center justify-between border border-white/5 transition-colors cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Shield className="w-3.5 h-3.5 text-neutral-400" />
-                    <span>Admin CMS Portal</span>
-                  </span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-neutral-500" />
                 </button>
               </div>
             </div>
