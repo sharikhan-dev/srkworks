@@ -134,15 +134,27 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
             </button>
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <button
-            id="mobile-menu-trigger"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
-            className="md:hidden flex items-center justify-center w-9 h-9 rounded-full bg-white/[0.05] border border-white/10 text-white cursor-pointer"
-          >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
+          {/* Mobile Right Controls: Quick Admin Shield Button + Hamburger */}
+          <div className="md:hidden flex items-center gap-1.5">
+            <button
+              onClick={onOpenAdmin}
+              aria-label="Open Admin Console"
+              title="Admin Console"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <Shield className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              id="mobile-menu-trigger"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-white/[0.05] border border-white/10 text-white cursor-pointer"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+          </div>
+
         </nav>
       </header>
 
