@@ -76,6 +76,12 @@ export interface Testimonial {
   rating: number;
   published: boolean;
   display_order: number;
+  client_project?: string;
+  project_outcome?: string;
+  project_image?: string;
+  project_link?: string;
+  tags?: string[];
+  client_logo?: string;
 }
 
 export interface ContactMessage {

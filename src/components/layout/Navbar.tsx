@@ -44,6 +44,7 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
   const defaultNavItems = [
     { id: 'work', label: 'Work', url: '#work', enabled: true },
     { id: 'services', label: 'Services', url: '#services', enabled: true },
+    { id: 'clients', label: 'Clients', url: '#clients', enabled: true },
     { id: 'about', label: 'About', url: '#about', enabled: true },
     { id: 'process', label: 'Process', url: '#process', enabled: true },
     { id: 'contact', label: 'Contact', url: '#contact', enabled: true }
@@ -58,24 +59,27 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
     if (cleanId === 'admin' || target.toLowerCase().includes('admin')) {
       if (onOpenAdmin) {
         onOpenAdmin();
-      } else {
-        onNavigate('admin');
+        setMobileMenuOpen(false);
       }
-    } else {
-      onNavigate(target.replace('#', ''));
+      return;
     }
+
+    onNavigate(cleanId);
     setMobileMenuOpen(false);
   };
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-3.5 sm:pt-5 transition-all duration-500 pointer-events-none">
+      <header
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 py-3 sm:py-4 px-4 sm:px-6 md:px-8 flex justify-center ${
+          isScrolled ? 'backdrop-blur-md bg-black/20' : 'bg-transparent'
+        }`}
+      >
         <nav
-          id="main-nav"
-          className={`pointer-events-auto flex items-center justify-between w-full max-w-6xl rounded-full px-4 sm:px-6 transition-all duration-500 ${
+          className={`w-full max-w-5xl rounded-full transition-all duration-300 flex items-center justify-between px-3.5 sm:px-5 py-2 sm:py-2.5 ${
             isScrolled
-              ? 'py-2.5 bg-[#0a0c10]/80 backdrop-blur-2xl border border-white/12 shadow-[0_16px_36px_-10px_rgba(0,0,0,0.8)]'
-              : 'py-3.5 bg-white/[0.03] backdrop-blur-xl border border-white/[0.07]'
+              ? 'glass-surface shadow-2xl border border-white/10'
+              : 'glass-surface border border-white/[0.08]'
           }`}
         >
           {/* Left: Personal Wordmark & Logo Initial */}
@@ -84,9 +88,19 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
             onClick={() => handleItemClick('hero')}
             className="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-white/20 via-white/80 to-white flex items-center justify-center p-[1px] shadow-sm">
-              <div className="w-full h-full rounded-full bg-[#090a0d] flex items-center justify-center text-[10px] font-black tracking-tighter text-white uppercase">
-                {logoInitial}
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-white/30 via-white/80 to-white flex items-center justify-center p-[1px] shadow-sm overflow-hidden shrink-0">
+              <div className="w-full h-full rounded-full bg-[#090a0d] flex items-center justify-center overflow-hidden">
+                <img
+                  src="/favicon.png"
+                  alt={brandName}
+                  className="w-full h-full object-contain p-0.5"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span className="text-[10px] font-black tracking-tighter text-white uppercase">
+                  {logoInitial}
+                </span>
               </div>
             </div>
             <span className="text-sm font-bold tracking-tight text-white group-hover:text-white/80 transition-colors uppercase">

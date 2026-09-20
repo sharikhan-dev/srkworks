@@ -20,7 +20,8 @@ import {
   Navigation,
   User,
   Share2,
-  Plus
+  Plus,
+  MessageSquareQuote
 } from 'lucide-react';
 import {
   Project,
@@ -32,7 +33,8 @@ import {
   NavbarSettings,
   AboutSettings,
   SectionVisibility,
-  SocialLink
+  SocialLink,
+  Testimonial
 } from '../../types';
 import { db } from '../../services/db';
 import { ProjectsManager } from './ProjectsManager';
@@ -45,6 +47,7 @@ import { NavbarManager } from './NavbarManager';
 import { AboutManager } from './AboutManager';
 import { SectionsManager } from './SectionsManager';
 import { SocialLinksManager } from './SocialLinksManager';
+import { TestimonialsManager } from './TestimonialsManager';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -59,6 +62,7 @@ type AdminTab =
   | 'navbar'
   | 'services'
   | 'projects'
+  | 'testimonials'
   | 'about'
   | 'socials'
   | 'sections'
@@ -75,6 +79,7 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
   const [about, setAbout] = useState<AboutSettings | null>(null);
   const [sections, setSections] = useState<SectionVisibility | null>(null);
   const [socials, setSocials] = useState<SocialLink[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -91,7 +96,8 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
         navData,
         aboutData,
         secData,
-        socData
+        socData,
+        testData
       ] = await Promise.all([
         db.getProjects(false),
         db.getServices(false),
@@ -102,7 +108,8 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
         db.getNavbarSettings(),
         db.getAboutSettings(),
         db.getSectionVisibility(),
-        db.getSocialLinks()
+        db.getSocialLinks(),
+        db.getTestimonials(false)
       ]);
       setProjects(projData);
       setServices(servData);
@@ -114,6 +121,7 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
       setAbout(aboutData);
       setSections(secData);
       setSocials(socData);
+      setTestimonials(testData);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -137,6 +145,7 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
     { id: 'navbar' as AdminTab, label: 'Navbar CMS', icon: Navigation },
     { id: 'projects' as AdminTab, label: 'Projects', icon: FolderGit2, count: projects.length },
     { id: 'services' as AdminTab, label: 'Services', icon: Cpu, count: services.length },
+    { id: 'testimonials' as AdminTab, label: 'Client Work & Reviews', icon: MessageSquareQuote, count: testimonials.length },
     { id: 'about' as AdminTab, label: 'About Section', icon: User },
     { id: 'socials' as AdminTab, label: 'Social Links', icon: Share2, count: socials.length },
     { id: 'sections' as AdminTab, label: 'Sections Visibility', icon: Layers },
@@ -485,6 +494,14 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
               {activeTab === 'services' && (
                 <ServicesManager
                   services={services}
+                  onRefresh={loadAllData}
+                />
+              )}
+
+              {/* TAB: TESTIMONIALS & CLIENT WORK */}
+              {activeTab === 'testimonials' && (
+                <TestimonialsManager
+                  testimonials={testimonials}
                   onRefresh={loadAllData}
                 />
               )}

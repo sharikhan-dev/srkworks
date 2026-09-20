@@ -38,7 +38,8 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   twitter: "https://x.com",
   seo_title: "SHARIK — UI/UX Design, Web Development & AI Automation",
   seo_description: "Designing digital experiences, building modern websites, and creating AI-powered systems for the next generation of businesses.",
-  og_image: "/hero-sculpture.jpg"
+  og_image: "/hero-sculpture.jpg",
+  favicon_url: "/favicon.png"
 };
 
 export const INITIAL_SERVICES: Service[] = [
@@ -346,7 +347,13 @@ export const INITIAL_TESTIMONIALS: Testimonial[] = [
     testimonial: "The rare ability to operate seamlessly across high-end visual design, production code, and LLM automation made our launch an enormous success. Cleanest craft I have seen.",
     rating: 5,
     published: true,
-    display_order: 1
+    display_order: 1,
+    client_project: "Synapse Autonomous AI Copilot",
+    project_outcome: "84% Autonomous Query Resolution",
+    project_image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+    project_link: "https://github.com",
+    tags: ["Streaming LLM", "Next.js", "Gemini API"],
+    client_logo: "Synthetix Labs"
   },
   {
     id: "test-2",
@@ -357,7 +364,13 @@ export const INITIAL_TESTIMONIALS: Testimonial[] = [
     testimonial: "Our conversion rate jumped 42% in our first month post-redesign. The attention to spacing, micro-interactions, and instant page speeds created an unmatched impression.",
     rating: 5,
     published: true,
-    display_order: 2
+    display_order: 2,
+    client_project: "Aura Health & Mind Meditation Platform",
+    project_outcome: "+42% Conversion Rate & 55% Retention",
+    project_image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=1200&q=80",
+    project_link: "https://dribbble.com",
+    tags: ["Spatial UI/UX", "WebGL", "React Architecture"],
+    client_logo: "Aura Wellness"
   },
   {
     id: "test-3",
@@ -368,7 +381,47 @@ export const INITIAL_TESTIMONIALS: Testimonial[] = [
     testimonial: "The AI customer chatbot and automated triage pipeline deployed in just two weeks now handles 80% of our tier-1 support with zero errors. Absolute craftsmanship.",
     rating: 5,
     published: true,
-    display_order: 3
+    display_order: 3,
+    client_project: "OmniFlow Autonomous Workflow Engine",
+    project_outcome: "80% Reduction in Manual Triage",
+    project_image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
+    project_link: "https://github.com",
+    tags: ["Event Queue", "Supabase", "TypeScript"],
+    client_logo: "OmniFlow Systems"
+  },
+  {
+    id: "test-4",
+    name: "Alex Morgan",
+    role: "Head of Growth",
+    company: "Top Muscle Global",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    testimonial: "Rebuilding our digital storefront elevated our brand to tier-1 athlete status. The cart abandonment dropped instantly and average session duration more than doubled.",
+    rating: 5,
+    published: true,
+    display_order: 4,
+    client_project: "Top Muscle Nutrition E-Commerce Storefront",
+    project_outcome: "+38% Conversion Rate & 2.4x Session Time",
+    project_image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+    project_link: "https://dribbble.com",
+    tags: ["Headless Commerce", "Calculators", "Tailwind CSS"],
+    client_logo: "Top Muscle Global"
+  },
+  {
+    id: "test-5",
+    name: "Priya Nair",
+    role: "Product Director",
+    company: "Zwigato Inc.",
+    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80",
+    testimonial: "Sharik redesigned our multi-step ordering flow into a fluid 3-step experience. Our checkout velocity jumped by 42% and customer reviews praised the new intuitive speed.",
+    rating: 5,
+    published: true,
+    display_order: 5,
+    client_project: "Zwigato Next-Gen On-Demand Delivery Flow",
+    project_outcome: "42% Faster Checkout Flow • 99.8% CSAT",
+    project_image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=80",
+    project_link: "https://behance.net",
+    tags: ["Figma", "Design Tokens", "Optimistic State"],
+    client_logo: "Zwigato Inc."
   }
 ];
 
@@ -508,9 +561,10 @@ export const INITIAL_NAVBAR_SETTINGS: NavbarSettings = {
   nav_items: [
     { id: "nav-work", label: "Work", url: "#work", enabled: true, display_order: 1 },
     { id: "nav-services", label: "Services", url: "#services", enabled: true, display_order: 2 },
-    { id: "nav-about", label: "About", url: "#about", enabled: true, display_order: 3 },
-    { id: "nav-process", label: "Process", url: "#process", enabled: true, display_order: 4 },
-    { id: "nav-contact", label: "Contact", url: "#contact", enabled: true, display_order: 5 }
+    { id: "nav-clients", label: "Clients", url: "#clients", enabled: true, display_order: 3 },
+    { id: "nav-about", label: "About", url: "#about", enabled: true, display_order: 4 },
+    { id: "nav-process", label: "Process", url: "#process", enabled: true, display_order: 5 },
+    { id: "nav-contact", label: "Contact", url: "#contact", enabled: true, display_order: 6 }
   ]
 };
 

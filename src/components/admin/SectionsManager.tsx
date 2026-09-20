@@ -21,7 +21,7 @@ const SECTION_CONFIG = [
   { key: 'about' as const, label: 'About / Philosophy Section', description: 'Core principles, bio statement, capability tags, and metric stats.' },
   { key: 'process' as const, label: 'Process Section', description: '4-step engineering and design methodology (Discover, Design, Build, Launch).' },
   { key: 'automation' as const, label: 'AI Automation Interactive Simulator', description: 'Interactive visual workflow diagram simulator.' },
-  { key: 'testimonials' as const, label: 'Testimonials Section', description: 'Client quotes, endorsements, and verified outcomes.' },
+  { key: 'testimonials' as const, label: 'Client Work & Reviews Section', description: 'Showcase of client deliverables, tangible metrics, and verified reviews & ratings.' },
   { key: 'contact' as const, label: 'Contact Section', description: 'Direct email, WhatsApp triggers, and contact message submission form.' },
   { key: 'footer' as const, label: 'Footer', description: 'Bottom brand wordmark, social links, and scroll-to-top button.' }
 ];

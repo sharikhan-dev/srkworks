@@ -213,7 +213,7 @@ export default function App() {
 
   // Track active section via IntersectionObserver
   useEffect(() => {
-    const sectionIds = ['hero', 'services', 'work', 'about', 'process', 'contact'];
+    const sectionIds = ['hero', 'services', 'work', 'clients', 'about', 'process', 'contact'];
     const observers: IntersectionObserver[] = [];
 
     sectionIds.forEach((id) => {
@@ -245,10 +245,13 @@ export default function App() {
   };
 
   const handleNavigate = (sectionId: string) => {
-    const cleanId = sectionId.replace(/^[#/]+/, '').toLowerCase();
+    let cleanId = sectionId.replace(/^[#/]+/, '').toLowerCase();
     if (cleanId === 'admin') {
       handleOpenAdmin();
       return;
+    }
+    if (cleanId === 'reviews' || cleanId === 'testimonials') {
+      cleanId = 'clients';
     }
     const el = document.getElementById(cleanId);
     if (el) {
@@ -372,10 +375,11 @@ export default function App() {
           <AutomationShowcase />
         )}
 
-        {/* Client Testimonials */}
+        {/* Client Testimonials & Work */}
         {sections.testimonials && (
           <TestimonialsSection
             testimonials={testimonials}
+            onNavigateContact={() => handleNavigate('contact')}
           />
         )}
 

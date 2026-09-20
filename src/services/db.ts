@@ -413,7 +413,13 @@ export const db = {
       testimonial: testimonial.testimonial,
       rating: testimonial.rating ?? 5,
       published: testimonial.published !== undefined ? testimonial.published : true,
-      display_order: testimonial.display_order ?? (all.length + 1)
+      display_order: testimonial.display_order ?? (all.length + 1),
+      client_project: testimonial.client_project || '',
+      project_outcome: testimonial.project_outcome || '',
+      project_image: testimonial.project_image || '',
+      project_link: testimonial.project_link || '',
+      tags: testimonial.tags || [],
+      client_logo: testimonial.client_logo || ''
     };
     const supabase = getSupabaseClient();
     if (supabase) {
