@@ -222,4 +222,6 @@ export interface SiteSettings {
   social_title?: string;
   social_description?: string;
   accent_gradient?: string;
+  created_at?: string;
+  updated_at?: string;
 }

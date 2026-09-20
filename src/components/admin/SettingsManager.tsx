@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Save,
   Check,
@@ -9,7 +9,9 @@ import {
   Shield,
   Sparkles,
   Link,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw,
+  Code
 } from 'lucide-react';
 import { SiteSettings } from '../../types';
 import { db } from '../../services/db';
@@ -27,7 +29,13 @@ export function SettingsManager({ settings, onRefresh }: SettingsManagerProps) {
   const [formData, setFormData] = useState<SiteSettings>(settings);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState('');
   const [copiedSql, setCopiedSql] = useState(false);
+
+  // Sync state whenever settings prop updates
+  useEffect(() => {
+    setFormData(settings);
+  }, [settings]);
 
   // Supabase Custom Config State
   const connInfo = getSupabaseConnectionInfo();
@@ -44,13 +52,37 @@ export function SettingsManager({ settings, onRefresh }: SettingsManagerProps) {
     try {
       await db.updateSiteSettings(formData);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setFeedbackMsg('Site settings saved and synchronized with Navbar & Hero!');
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setFeedbackMsg('');
+      }, 3500);
       onRefresh();
     } catch (err) {
       console.error('Error saving settings:', err);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSyncWithSeedData = () => {
+    if (window.confirm('Reload settings from src/services/seedData.ts? This will update settings to match your code file.')) {
+      db.resetToSeedData('settings');
+      onRefresh();
+      setSaveSuccess(true);
+      setFeedbackMsg('Reloaded settings from seedData.ts code file!');
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setFeedbackMsg('');
+      }, 3500);
+    }
+  };
+
+  const handleCopyCode = () => {
+    const code = `export const INITIAL_SITE_SETTINGS: SiteSettings = ${JSON.stringify(formData, null, 2)};`;
+    navigator.clipboard.writeText(code);
+    setFeedbackMsg('Copied INITIAL_SITE_SETTINGS code to clipboard! You can paste it into seedData.ts.');
+    setTimeout(() => setFeedbackMsg(''), 3500);
   };
 
   const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,24 +131,53 @@ export function SettingsManager({ settings, onRefresh }: SettingsManagerProps) {
             </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center gap-1.5 shadow-md self-start sm:self-auto"
-          >
-            {saveSuccess ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Saved Successfully</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>{isSaving ? 'Saving...' : 'Save Site Settings'}</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={handleSyncWithSeedData}
+              className="px-3 py-2 rounded-xl text-xs font-medium text-neutral-300 glass-pill hover:text-white border border-white/10 hover:border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Reload settings directly from src/services/seedData.ts"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Sync with seedData.ts</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className="px-3 py-2 rounded-xl text-xs font-medium text-neutral-300 glass-pill hover:text-white border border-white/10 hover:border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Copy current settings as TypeScript code to paste into seedData.ts"
+            >
+              <Code className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Copy as Code</span>
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-5 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+            >
+              {saveSuccess ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>Saved Successfully</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Saving...' : 'Save Site Settings'}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
+
+        {feedbackMsg && (
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{feedbackMsg}</span>
+          </div>
+        )}
 
         {/* Identity & Availability */}
         <div className="p-6 rounded-2xl glass-surface border border-white/10 space-y-4">

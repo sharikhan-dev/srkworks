@@ -64,44 +64,81 @@ function setLocalData<T>(key: string, value: T): void {
   }
 }
 
-// Ensure seed data is initialized in local store
+const SEED_FINGERPRINT_KEY = 'aura_seed_fingerprint_v2';
+
+function computeSeedFingerprint(): string {
+  try {
+    const pStr = INITIAL_PROJECTS.map(p => `${p.id}:${p.title || p.name}:${p.category}:${p.year}:${p.cover_image || p.image_url}:${p.case_study_url || p.live_url}:${p.short_description || p.description}`).join('|');
+    const sStr = `${INITIAL_SITE_SETTINGS.name}:${INITIAL_SITE_SETTINGS.headline}:${INITIAL_SITE_SETTINGS.seo_title}:${INITIAL_SITE_SETTINGS.profile_image}:${INITIAL_SITE_SETTINGS.email}`;
+    const nStr = `${INITIAL_NAVBAR_SETTINGS.brand_name}:${INITIAL_NAVBAR_SETTINGS.logo_initial}`;
+    const hStr = `${INITIAL_HERO_SETTINGS.eyebrow}:${INITIAL_HERO_SETTINGS.headline}:${INITIAL_HERO_SETTINGS.hero_image}`;
+    return `${pStr}##${sStr}##${nStr}##${hStr}`;
+  } catch {
+    return 'default_fingerprint';
+  }
+}
+
+/**
+ * Synchronizes localStorage with file data (seedData.ts).
+ * If the developer edits seedData.ts in the code, the change is automatically detected
+ * via fingerprint and updated in localStorage, while preserving custom items added in Admin.
+ */
+export function syncWithSeedData(force = false) {
+  const currentFingerprint = computeSeedFingerprint();
+  const savedFingerprint = localStorage.getItem(SEED_FINGERPRINT_KEY);
+
+  if (force || !savedFingerprint || savedFingerprint !== currentFingerprint) {
+    // 1. PROJECTS: Update existing seed projects with latest code changes, keep any user-created items
+    const existingProjects = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
+    const seedIds = new Set(INITIAL_PROJECTS.map(p => p.id));
+    const userCustomProjects = existingProjects.filter(p => !seedIds.has(p.id));
+
+    // When updating from code file:
+    // Update seed projects to reflect the code file, preserving any custom user projects created via Admin
+    const mergedProjects = [...INITIAL_PROJECTS, ...userCustomProjects];
+    setLocalData(STORAGE_KEYS.PROJECTS, mergedProjects);
+
+    // 2. SETTINGS: If force or first time, load seed settings; if file changed, merge seed updates
+    if (force || !savedFingerprint) {
+      setLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
+      setLocalData(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
+      setLocalData(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
+    } else {
+      const existingSettings = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
+      setLocalData(STORAGE_KEYS.SETTINGS, { ...existingSettings, ...INITIAL_SITE_SETTINGS });
+    }
+
+    // 3. Ensure other collections exist
+    if (force || !localStorage.getItem(STORAGE_KEYS.SERVICES)) {
+      setLocalData(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
+    }
+    if (force || !localStorage.getItem(STORAGE_KEYS.SKILLS)) {
+      setLocalData(STORAGE_KEYS.SKILLS, INITIAL_SKILLS);
+    }
+    if (force || !localStorage.getItem(STORAGE_KEYS.TESTIMONIALS)) {
+      setLocalData(STORAGE_KEYS.TESTIMONIALS, INITIAL_TESTIMONIALS);
+    }
+    if (force || !localStorage.getItem(STORAGE_KEYS.EXPERIENCE)) {
+      setLocalData(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
+    }
+    if (force || !localStorage.getItem(STORAGE_KEYS.SOCIALS)) {
+      setLocalData(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
+    }
+    if (force || !localStorage.getItem(STORAGE_KEYS.THEME)) {
+      setLocalData(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
+    }
+    if (force || !localStorage.getItem(STORAGE_KEYS.SECTIONS)) {
+      setLocalData(STORAGE_KEYS.SECTIONS, INITIAL_SECTION_VISIBILITY);
+    }
+
+    localStorage.setItem(SEED_FINGERPRINT_KEY, currentFingerprint);
+  }
+}
+
+// Ensure seed data is initialized and kept in sync with code file
 export function initializeLocalStorageIfNeeded() {
-  if (!localStorage.getItem(STORAGE_KEYS.PROJECTS)) {
-    setLocalData(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SERVICES)) {
-    setLocalData(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SKILLS)) {
-    setLocalData(STORAGE_KEYS.SKILLS, INITIAL_SKILLS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.EXPERIENCE)) {
-    setLocalData(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.TESTIMONIALS)) {
-    setLocalData(STORAGE_KEYS.TESTIMONIALS, INITIAL_TESTIMONIALS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
-    setLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SOCIALS)) {
-    setLocalData(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.THEME)) {
-    setLocalData(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.HERO)) {
-    setLocalData(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.NAVBAR)) {
-    setLocalData(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.ABOUT)) {
-    setLocalData(STORAGE_KEYS.ABOUT, INITIAL_ABOUT_SETTINGS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SECTIONS)) {
-    setLocalData(STORAGE_KEYS.SECTIONS, INITIAL_SECTION_VISIBILITY);
-  }
+  syncWithSeedData(false);
+
   if (!localStorage.getItem(STORAGE_KEYS.MESSAGES)) {
     setLocalData(STORAGE_KEYS.MESSAGES, [
       {
@@ -133,34 +170,90 @@ export function initializeLocalStorageIfNeeded() {
 // -------------------------------------------------------------
 
 export const db = {
+  // === SYNC & RESET WITH CODE FILE (seedData.ts) ===
+  resetToSeedData(entity?: 'all' | 'projects' | 'settings'): void {
+    if (!entity || entity === 'all' || entity === 'projects') {
+      setLocalData(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
+    }
+    if (!entity || entity === 'all' || entity === 'settings') {
+      setLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
+      setLocalData(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
+      setLocalData(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
+    }
+    if (!entity || entity === 'all') {
+      setLocalData(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
+      setLocalData(STORAGE_KEYS.SKILLS, INITIAL_SKILLS);
+      setLocalData(STORAGE_KEYS.TESTIMONIALS, INITIAL_TESTIMONIALS);
+      setLocalData(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
+      setLocalData(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
+      setLocalData(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
+      setLocalData(STORAGE_KEYS.SECTIONS, INITIAL_SECTION_VISIBILITY);
+    }
+    localStorage.setItem(SEED_FINGERPRINT_KEY, computeSeedFingerprint());
+  },
+
   // === SITE SETTINGS ===
   async getSiteSettings(): Promise<SiteSettings> {
+    const local = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         const { data, error } = await supabase.from('site_settings').select('*').limit(1).single();
-        if (!error && data) return data;
+        if (!error && data) {
+          // If local has more recent update or valid name, prefer local
+          if (local.updated_at && data.updated_at && new Date(local.updated_at) > new Date(data.updated_at)) {
+            return local;
+          }
+          return { ...local, ...data };
+        }
       } catch (err) {
         console.warn('Supabase getSiteSettings error, falling back to local storage:', err);
       }
     }
-    const local = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
     return {
       ...INITIAL_SITE_SETTINGS,
       ...local,
-      name: (local.name && !local.name.toLowerCase().includes('aura')) ? local.name : INITIAL_SITE_SETTINGS.name,
       hero_phrases: local.hero_phrases && local.hero_phrases.length > 0 ? local.hero_phrases : INITIAL_SITE_SETTINGS.hero_phrases
     };
   },
 
   async updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
     const current = await this.getSiteSettings();
-    const updated = { ...current, ...settings };
+    const updated = {
+      ...current,
+      ...settings,
+      updated_at: new Date().toISOString()
+    };
+
+    // Keep navbar brand name and logo_initial synchronized with site settings
+    if (settings.name || settings.logo_initial) {
+      const currentNav = getLocalData<NavbarSettings>(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
+      const updatedNav: NavbarSettings = {
+        ...currentNav,
+        ...(settings.name ? { brand_name: settings.name } : {}),
+        ...(settings.logo_initial ? { logo_initial: settings.logo_initial } : {})
+      };
+      setLocalData(STORAGE_KEYS.NAVBAR, updatedNav);
+    }
+
+    // Keep hero image and hero texts in sync if profile image/badge changed
+    if (settings.profile_image || settings.title_badge || settings.headline || settings.hero_supporting_text) {
+      const currentHero = getLocalData<HeroSettings>(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
+      const updatedHero: HeroSettings = {
+        ...currentHero,
+        ...(settings.profile_image ? { hero_image: settings.profile_image } : {}),
+        ...(settings.title_badge ? { eyebrow: settings.title_badge } : {}),
+        ...(settings.headline ? { headline: settings.headline } : {}),
+        ...(settings.hero_supporting_text ? { supporting_text: settings.hero_supporting_text } : {})
+      };
+      setLocalData(STORAGE_KEYS.HERO, updatedHero);
+    }
+
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         const { error } = await supabase.from('site_settings').upsert([updated]);
-        if (error) console.warn('Supabase updateSiteSettings error:', error);
+        if (error) console.warn('Supabase updateSiteSettings error:', error.message);
       } catch (err) {
         console.warn('Supabase updateSiteSettings error:', err);
       }
@@ -171,6 +264,7 @@ export const db = {
 
   // === PROJECTS ===
   async getProjects(publicOnly = true): Promise<Project[]> {
+    const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -179,13 +273,25 @@ export const db = {
           query = query.eq('published', true);
         }
         const { data, error } = await query;
-        if (!error && data && data.length > 0) return data;
+        if (!error && data && data.length > 0) {
+          // Merge Supabase data with any newer local edits to avoid overwriting recent changes
+          const map = new Map<string, Project>();
+          data.forEach(p => map.set(p.id, p));
+          local.forEach(lp => {
+            const sp = map.get(lp.id);
+            if (!sp || (lp.updated_at && sp.updated_at && new Date(lp.updated_at) > new Date(sp.updated_at))) {
+              map.set(lp.id, lp);
+            }
+          });
+          const merged = Array.from(map.values()).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+          setLocalData(STORAGE_KEYS.PROJECTS, merged);
+          return publicOnly ? merged.filter(p => p.published) : merged;
+        }
       } catch (err) {
         console.warn('Supabase getProjects error, falling back:', err);
       }
     }
-    const all = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
-    const sorted = [...all].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const sorted = [...local].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     return publicOnly ? sorted.filter(p => p.published) : sorted;
   },
 
@@ -193,9 +299,11 @@ export const db = {
     const all = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
     const id = project.id || `proj-${Date.now()}`;
     const image = project.image_url || project.cover_image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
-    const title = project.title || project.name;
+    const title = (project.title || project.name || '').trim();
     const slug = project.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const desc = project.description || project.short_description || '';
+    const desc = (project.description || project.short_description || '').trim();
+    const caseStudyUrl = (project.case_study_url || project.live_url || '').trim();
+
     const fullProject: Project = {
       id,
       name: title,
@@ -206,14 +314,14 @@ export const db = {
       category: project.category || 'UI/UX Design',
       cover_image: image,
       image_url: image,
-      images: project.images || [image],
+      images: project.images && project.images.length > 0 ? project.images : [image],
       video_url: project.video_url || '',
-      technologies: project.technologies || ['Design', 'Development'],
+      technologies: project.technologies && project.technologies.length > 0 ? project.technologies : ['Design', 'Development'],
       project_type: project.project_type || project.category || 'Case Study',
-      year: project.year || String(new Date().getFullYear()),
+      year: (project.year || String(new Date().getFullYear())).trim(),
       featured: Boolean(project.featured),
-      live_url: project.live_url || project.case_study_url || '',
-      case_study_url: project.case_study_url || project.live_url || '',
+      live_url: caseStudyUrl,
+      case_study_url: caseStudyUrl,
       button_text: project.button_text?.trim() || 'View Case Study ↗',
       display_order: project.display_order ?? (all.length + 1),
       published: project.published !== undefined ? project.published : true,
@@ -228,7 +336,8 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('projects').upsert([fullProject]);
+        const { error } = await supabase.from('projects').upsert([fullProject]);
+        if (error) console.warn('Supabase saveProject error:', error.message);
       } catch (err) {
         console.warn('Supabase saveProject error:', err);
       }
@@ -533,11 +642,56 @@ export const db = {
       }
     }
 
-    // Fallback: Read file as Data URL
+    // Fallback: Read file with client-side compression to avoid exceeding localStorage quota
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
+      reader.onload = () => {
+        const rawUrl = reader.result as string;
+        // If not browser canvas available or svg, return raw
+        if (typeof document === 'undefined' || file.type.includes('svg')) {
+          resolve(rawUrl);
+          return;
+        }
+
+        const img = new Image();
+        img.onerror = () => resolve(rawUrl);
+        img.onload = () => {
+          try {
+            const maxDimension = 1280;
+            let { width, height } = img;
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(rawUrl);
+              return;
+            }
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compress to JPEG 0.82 for high visual quality at ~100KB-150KB
+            const compressed = canvas.toDataURL('image/jpeg', 0.82);
+            resolve(compressed);
+          } catch {
+            resolve(rawUrl);
+          }
+        };
+        img.src = rawUrl;
+      };
       reader.readAsDataURL(file);
     });
   },

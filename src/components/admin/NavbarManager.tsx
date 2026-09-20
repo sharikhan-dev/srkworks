@@ -80,6 +80,13 @@ export function NavbarManager({ navbar, onRefresh }: NavbarManagerProps) {
 
     try {
       await db.updateNavbarSettings(formData);
+      // Keep site settings in sync
+      if (formData.brand_name || formData.logo_initial) {
+        await db.updateSiteSettings({
+          name: formData.brand_name,
+          logo_initial: formData.logo_initial
+        });
+      }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
       onRefresh();

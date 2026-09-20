@@ -37,6 +37,7 @@ import {
   Testimonial
 } from '../../types';
 import { db } from '../../services/db';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { ProjectsManager } from './ProjectsManager';
 import { ServicesManager } from './ServicesManager';
 import { MessagesManager } from './MessagesManager';
@@ -311,9 +312,15 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Supabase Connected
+            <span
+              className={`text-[11px] font-mono flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                isSupabaseConfigured()
+                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                  : 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConfigured() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              {isSupabaseConfigured() ? 'Supabase Connected' : 'Local Persistence (Active)'}
             </span>
 
             <button

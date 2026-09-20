@@ -9,7 +9,10 @@ import {
   ImageIcon,
   AlertTriangle,
   FolderGit2,
-  Check
+  Check,
+  RefreshCw,
+  Code,
+  CheckCircle2
 } from 'lucide-react';
 import { Project } from '../../types';
 import { db } from '../../services/db';
@@ -33,9 +36,15 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [urlError, setUrlError] = useState<string>('');
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [customCategory, setCustomCategory] = useState<string>('');
   const [selectedCategorySelect, setSelectedCategorySelect] = useState<string>('UI/UX Design');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
+    setStatusMessage({ type, text });
+    setTimeout(() => setStatusMessage(null), 3500);
+  };
 
   const handleCreateNew = () => {
     setSelectedCategorySelect('UI/UX Design');
@@ -47,7 +56,7 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
       category: 'UI/UX Design',
       short_description: '',
       description: '',
-      year: '2026',
+      year: String(new Date().getFullYear()),
       cover_image: '',
       image_url: '',
       case_study_url: '',
@@ -76,19 +85,31 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
       description: proj.description || proj.short_description || '',
       cover_image: proj.image_url || proj.cover_image || '',
       image_url: proj.image_url || proj.cover_image || '',
-      year: proj.year || '2026',
+      year: proj.year || String(new Date().getFullYear()),
       case_study_url: proj.case_study_url || proj.live_url || '',
       button_text: proj.button_text?.trim() || 'View Case Study ↗'
     });
   };
 
-  const validateUrl = (url: string): boolean => {
-    if (!url || url.trim() === '') return true; // Optional URL
+  const normalizeAndValidateUrl = (rawUrl: string): { url: string; error?: string } => {
+    let url = (rawUrl || '').trim();
+    if (!url) return { url: '' };
+
+    // Support internal anchor (#work, #contact) or relative path (/...)
+    if (url.startsWith('#') || url.startsWith('/')) {
+      return { url };
+    }
+
+    // Auto-prefix https:// if protocol is omitted (e.g. "behance.net/abc" -> "https://behance.net/abc")
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `https://${url}`;
+    }
+
     try {
-      const parsed = new URL(url);
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      new URL(url);
+      return { url };
     } catch {
-      return false;
+      return { url, error: 'Please enter a valid URL (e.g. https://behance.net/...)' };
     }
   };
 
@@ -96,10 +117,12 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
     e.preventDefault();
     if (!editingProject?.name?.trim()) return;
 
-    // Validate URL if provided
-    const targetUrl = (editingProject.case_study_url || '').trim();
-    if (targetUrl && !validateUrl(targetUrl)) {
-      setUrlError('Please enter a valid URL starting with https:// or http://');
+    // Validate and auto-normalize URL
+    const { url: targetUrl, error: urlValidationError } = normalizeAndValidateUrl(
+      editingProject.case_study_url || editingProject.live_url || ''
+    );
+    if (urlValidationError) {
+      setUrlError(urlValidationError);
       return;
     }
     setUrlError('');
@@ -118,7 +141,7 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
         category: finalCategory,
         short_description: (editingProject.short_description || '').trim(),
         description: (editingProject.short_description || '').trim(),
-        year: (editingProject.year || '2026').trim(),
+        year: (editingProject.year || String(new Date().getFullYear())).trim(),
         cover_image: editingProject.cover_image || editingProject.image_url || '',
         image_url: editingProject.cover_image || editingProject.image_url || '',
         case_study_url: targetUrl,
@@ -128,12 +151,28 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
 
       await db.saveProject(payload);
       setEditingProject(null);
+      showFeedback(`Project "${payload.title}" saved successfully!`);
       onRefresh();
     } catch (err) {
       console.error('Error saving project:', err);
+      showFeedback('Failed to save project. Please check values.', 'error');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSyncWithSeedData = () => {
+    if (window.confirm('Reload projects from src/services/seedData.ts? This will update projects to match your code file.')) {
+      db.resetToSeedData('projects');
+      onRefresh();
+      showFeedback('Successfully reloaded projects from seedData.ts code file!');
+    }
+  };
+
+  const handleCopyCode = () => {
+    const code = `export const INITIAL_PROJECTS: Project[] = ${JSON.stringify(projects, null, 2)};`;
+    navigator.clipboard.writeText(code);
+    showFeedback('Copied INITIAL_PROJECTS code to clipboard! You can paste it into seedData.ts.');
   };
 
   const handleConfirmDelete = async () => {
@@ -182,14 +221,55 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
           </p>
         </div>
 
-        <button
-          onClick={handleCreateNew}
-          className="px-4 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-colors flex items-center gap-1.5 shadow-md self-start sm:self-auto cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Project</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleSyncWithSeedData}
+            type="button"
+            className="px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-300 glass-pill hover:text-white border border-white/10 hover:border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="Reload projects directly from src/services/seedData.ts code file"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-neutral-400" />
+            <span>Sync with seedData.ts</span>
+          </button>
+
+          <button
+            onClick={handleCopyCode}
+            type="button"
+            className="px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-300 glass-pill hover:text-white border border-white/10 hover:border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="Copy current projects as TypeScript code ready to paste into seedData.ts"
+          >
+            <Code className="w-3.5 h-3.5 text-neutral-400" />
+            <span>Copy as Code</span>
+          </button>
+
+          <button
+            onClick={handleCreateNew}
+            type="button"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-colors flex items-center gap-1.5 shadow-md self-start sm:self-auto cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Project</span>
+          </button>
+        </div>
       </div>
+
+      {/* Feedback banner */}
+      {statusMessage && (
+        <div
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2 transition-all ${
+            statusMessage.type === 'success'
+              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+              : 'bg-red-500/10 border border-red-500/20 text-red-400'
+          }`}
+        >
+          {statusMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 text-red-400" />
+          )}
+          <span>{statusMessage.text}</span>
+        </div>
+      )}
 
       {/* Projects Table / List */}
       <div className="rounded-2xl glass-surface border border-white/10 overflow-hidden">
