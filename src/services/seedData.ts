@@ -1,4 +1,17 @@
-import { Project, Service, Skill, Experience, Testimonial, SiteSettings, SocialLink } from '../types';
+import {
+  Project,
+  Service,
+  Skill,
+  Experience,
+  Testimonial,
+  SiteSettings,
+  SocialLink,
+  ThemeSettings,
+  HeroSettings,
+  NavbarSettings,
+  AboutSettings,
+  SectionVisibility
+} from '../types';
 
 export const INITIAL_SITE_SETTINGS: SiteSettings = {
   name: "SHARIK KHAN",

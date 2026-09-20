@@ -34,7 +34,7 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#08090c] text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 py-8 bg-[#08090c] text-white overflow-y-auto">
       {/* Background blur and grid */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
@@ -42,15 +42,16 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-md p-8 sm:p-10 rounded-3xl glass-surface border border-white/10 shadow-2xl bg-[#0f1118]/90 backdrop-blur-2xl"
+        className="relative w-full max-w-md p-6 sm:p-10 my-auto rounded-3xl glass-surface border border-white/10 shadow-2xl bg-[#0f1118]/90 backdrop-blur-2xl"
       >
         <button
           onClick={onCancel}
-          className="absolute top-6 left-6 flex items-center gap-1 text-xs text-neutral-400 hover:text-white transition-colors"
+          className="absolute top-5 left-5 sm:top-6 sm:left-6 flex items-center gap-1 text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Return to Site</span>
         </button>
+
 
         <div className="text-center mt-6 mb-8">
           <div className="w-12 h-12 rounded-2xl glass-pill flex items-center justify-center mx-auto mb-4 bg-white/[0.05] border border-white/10">

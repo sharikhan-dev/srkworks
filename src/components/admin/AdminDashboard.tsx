@@ -339,58 +339,59 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
                   </div>
 
                   {/* 4 Overview Metrics */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
-                      <span className="text-xs font-mono uppercase text-neutral-400">Website Status</span>
-                      <div className="text-2xl font-extrabold text-emerald-400 flex items-center gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="p-4 sm:p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
+                      <span className="text-[11px] sm:text-xs font-mono uppercase text-neutral-400">Website Status</span>
+                      <div className="text-xl sm:text-2xl font-extrabold text-emerald-400 flex items-center gap-2">
                         <span>Live</span>
                         <span className="w-2 h-2 rounded-full bg-emerald-400" />
                       </div>
-                      <span className="text-[11px] text-neutral-500 block">CMS Powered</span>
+                      <span className="text-[10px] sm:text-[11px] text-neutral-500 block">CMS Powered</span>
                     </div>
 
-                    <div className="p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
-                      <span className="text-xs font-mono uppercase text-neutral-400">Published Projects</span>
-                      <div className="text-2xl font-extrabold text-white">
+                    <div className="p-4 sm:p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
+                      <span className="text-[11px] sm:text-xs font-mono uppercase text-neutral-400">Published Projects</span>
+                      <div className="text-xl sm:text-2xl font-extrabold text-white">
                         {publishedProjectsCount}
                       </div>
-                      <span className="text-[11px] text-neutral-500 block">External Case Studies</span>
+                      <span className="text-[10px] sm:text-[11px] text-neutral-500 block">External Case Studies</span>
                     </div>
 
-                    <div className="p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
-                      <span className="text-xs font-mono uppercase text-neutral-400">Active Services</span>
-                      <div className="text-2xl font-extrabold text-white">
+                    <div className="p-4 sm:p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
+                      <span className="text-[11px] sm:text-xs font-mono uppercase text-neutral-400">Active Services</span>
+                      <div className="text-xl sm:text-2xl font-extrabold text-white">
                         {activeServicesCount}
                       </div>
-                      <span className="text-[11px] text-neutral-500 block">Rupee (₹) Pricing</span>
+                      <span className="text-[10px] sm:text-[11px] text-neutral-500 block">Rupee (₹) Pricing</span>
                     </div>
 
-                    <div className="p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
-                      <span className="text-xs font-mono uppercase text-neutral-400">Active Theme</span>
-                      <div className="text-2xl font-extrabold text-cyan-400 capitalize truncate">
+                    <div className="p-4 sm:p-5 rounded-2xl glass-surface border border-white/10 space-y-1">
+                      <span className="text-[11px] sm:text-xs font-mono uppercase text-neutral-400">Active Theme</span>
+                      <div className="text-xl sm:text-2xl font-extrabold text-cyan-400 capitalize truncate">
                         {theme?.preset || 'Default'}
                       </div>
-                      <span className="text-[11px] text-neutral-500 block">{theme?.heading_font}</span>
+                      <span className="text-[10px] sm:text-[11px] text-neutral-500 block truncate">{theme?.heading_font}</span>
                     </div>
                   </div>
 
                   {/* Quick Actions Card */}
-                  <div className="p-6 rounded-2xl glass-surface border border-white/10 space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                  <div className="p-4 sm:p-6 rounded-2xl glass-surface border border-white/10 space-y-4">
+                    <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono">
                       Quick Action Shortcuts
                     </h3>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
                       <button
                         onClick={() => setActiveTab('projects')}
-                        className="p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 flex flex-col items-start gap-2 transition-all cursor-pointer group"
+                        className="p-3 sm:p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 flex flex-col items-start gap-2 transition-all cursor-pointer group"
                       >
-                        <div className="p-2 rounded-lg bg-white/10 text-white group-hover:scale-105 transition-transform">
-                          <Plus className="w-4 h-4" />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-white/10 text-white group-hover:scale-105 transition-transform">
+                          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </div>
                         <span className="text-xs font-semibold text-white">Add Project</span>
-                        <span className="text-[10px] text-neutral-400">External case-study</span>
+                        <span className="text-[10px] text-neutral-400 truncate">External case-study</span>
                       </button>
+
 
                       <button
                         onClick={() => setActiveTab('services')}

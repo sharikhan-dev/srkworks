@@ -110,19 +110,46 @@ export default function App() {
   useEffect(() => {
     loadData();
 
-    // Check if URL specifies admin route (e.g. /#admin or /admin)
+    // Check if URL specifies admin route (e.g. /#admin, /admin, or ?admin=true)
     const checkRoute = () => {
+      const hash = (window.location.hash || '').toLowerCase();
+      const path = (window.location.pathname || '').toLowerCase();
+      const search = (window.location.search || '').toLowerCase();
       const isPathAdmin =
-        window.location.pathname.includes('/admin') ||
-        window.location.hash.includes('admin');
+        path.includes('/admin') ||
+        hash.includes('admin') ||
+        search.includes('admin');
       setIsAdminOpen(isPathAdmin);
     };
+
     checkRoute();
     window.addEventListener('hashchange', checkRoute);
     window.addEventListener('popstate', checkRoute);
+
+    // Global keyboard shortcut to toggle admin: Ctrl + Shift + A or Alt + A
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') ||
+        (e.altKey && e.key.toLowerCase() === 'a')
+      ) {
+        e.preventDefault();
+        setIsAdminOpen((prev) => {
+          if (!prev) {
+            window.location.hash = 'admin';
+            return true;
+          } else {
+            handleCloseAdmin();
+            return false;
+          }
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       window.removeEventListener('hashchange', checkRoute);
       window.removeEventListener('popstate', checkRoute);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -212,8 +239,18 @@ export default function App() {
     };
   }, [loading]);
 
+  const handleOpenAdmin = () => {
+    window.location.hash = 'admin';
+    setIsAdminOpen(true);
+  };
+
   const handleNavigate = (sectionId: string) => {
-    const el = document.getElementById(sectionId);
+    const cleanId = sectionId.replace(/^[#/]+/, '').toLowerCase();
+    if (cleanId === 'admin') {
+      handleOpenAdmin();
+      return;
+    }
+    const el = document.getElementById(cleanId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
@@ -221,11 +258,11 @@ export default function App() {
 
   const handleCloseAdmin = () => {
     setIsAdminOpen(false);
-    if (window.location.hash.includes('admin')) {
-      window.history.pushState(null, '', window.location.pathname);
+    if (window.location.hash.toLowerCase().includes('admin')) {
+      window.history.replaceState(null, '', window.location.pathname || '/');
     }
-    if (window.location.pathname.includes('/admin')) {
-      window.history.pushState(null, '', '/');
+    if (window.location.pathname.toLowerCase().includes('/admin')) {
+      window.history.replaceState(null, '', '/');
     }
     loadData();
   };
@@ -252,7 +289,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen font-sans selection:bg-white/20 selection:text-white relative transition-colors duration-500"
+      className="min-h-screen font-sans selection:bg-white/20 selection:text-white relative transition-colors duration-500 overflow-x-hidden"
       style={{
         backgroundColor: theme?.background_color || 'var(--background)',
         color: theme?.text_color || 'var(--text)'
@@ -264,6 +301,7 @@ export default function App() {
         navbar={navbar}
         activeSection={activeSection}
         onNavigate={handleNavigate}
+        onOpenAdmin={handleOpenAdmin}
       />
 
       {/* Main Single-Page Continuous Narrative Flow */}
@@ -355,6 +393,7 @@ export default function App() {
           settings={settings}
           socials={socials}
           onNavigate={handleNavigate}
+          onOpenAdmin={handleOpenAdmin}
         />
       )}
     </div>

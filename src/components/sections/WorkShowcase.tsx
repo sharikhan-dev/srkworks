@@ -36,33 +36,33 @@ export function WorkShowcase({ projects }: WorkShowcaseProps) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
+        className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 gap-6"
       >
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-4 border border-white/10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
             <Layers className="w-3.5 h-3.5 text-neutral-300" />
-            <span className="text-[11px] font-mono tracking-widest uppercase text-neutral-300">
+            <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-neutral-300">
               Selected Work
             </span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
             EDITORIAL CASE STUDIES
           </h2>
-          <p className="text-neutral-400 text-sm sm:text-base max-w-xl mt-4 leading-relaxed">
+          <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
             High-craft visual design systems, resilient web engineering, and autonomous AI architectures deployed in production.
           </p>
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl glass-surface border border-white/10">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl glass-surface border border-white/10 max-w-full overflow-x-auto scrollbar-none">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+                className={`px-3 sm:px-3.5 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap transition-all cursor-pointer ${
                   isActive
                     ? 'bg-white text-black font-semibold shadow-sm'
                     : 'text-neutral-400 hover:text-white hover:bg-white/5'
@@ -82,12 +82,13 @@ export function WorkShowcase({ projects }: WorkShowcaseProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="p-16 text-center glass-surface rounded-3xl border border-white/10"
+          className="p-10 sm:p-16 text-center glass-surface rounded-3xl border border-white/10"
         >
           <p className="text-neutral-400 text-sm">No projects currently available in this category.</p>
         </motion.div>
       ) : (
-        <div className="space-y-8 sm:space-y-12">
+        <div className="space-y-6 sm:space-y-12">
+
           {filteredProjects.map((project, index) => (
             <ProjectCard
               key={project.id}

@@ -80,17 +80,17 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="mb-16 sm:mb-20"
       >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-4 border border-white/10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          <span className="text-[11px] font-mono uppercase tracking-widest text-neutral-300">
+          <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-300">
             Core Expertise
           </span>
         </div>
 
-        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
+        <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
           WHAT I BUILD
         </h2>
-        <p className="text-neutral-400 text-sm sm:text-base max-w-xl mt-4 leading-relaxed">
+        <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
           Disciplined design and engineering to build digital products, high-velocity websites, and autonomous intelligence systems.
         </p>
       </motion.div>
@@ -111,31 +111,31 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
               onClick={() => onSelectServiceCTA && onSelectServiceCTA(service as Service)}
-              className={`group relative py-8 sm:py-12 px-3 sm:px-6 rounded-2xl transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-6 ${
+              className={`group relative py-6 sm:py-12 px-2.5 sm:px-6 rounded-2xl transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 ${
                 isHovered ? 'bg-white/[0.025] backdrop-blur-md' : 'hover:bg-white/[0.015]'
               }`}
             >
               {/* Left Column: Number & Main Title */}
-              <div className="flex items-start md:items-baseline gap-6 sm:gap-10">
-                <span className="text-sm sm:text-base font-mono font-bold text-neutral-500 group-hover:text-white transition-colors duration-300">
+              <div className="flex items-start md:items-baseline gap-4 sm:gap-10">
+                <span className="text-xs sm:text-base font-mono font-bold text-neutral-500 group-hover:text-white transition-colors duration-300 pt-1 md:pt-0">
                   {stepNumber}
                 </span>
 
                 <div>
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white group-hover:text-neutral-100 transition-colors duration-300">
+                  <h3 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white group-hover:text-neutral-100 transition-colors duration-300">
                     {service.title}
                   </h3>
 
-                  <p className="text-sm sm:text-base text-neutral-400 max-w-xl mt-2 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-base text-neutral-400 max-w-xl mt-2 leading-relaxed font-normal">
                     {service.short_description}
                   </p>
 
                   {/* Capability Tags */}
-                  <div className="flex flex-wrap items-center gap-2 mt-4">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4">
                     {service.technologies?.map((tech, tIdx) => (
                       <span
                         key={tIdx}
-                        className="text-[11px] font-mono text-neutral-400 bg-white/[0.03] border border-white/[0.06] px-2.5 py-0.5 rounded-full"
+                        className="text-[10px] sm:text-[11px] font-mono text-neutral-400 bg-white/[0.03] border border-white/[0.06] px-2 sm:px-2.5 py-0.5 rounded-full"
                       >
                         {tech}
                       </span>
@@ -143,6 +143,7 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
                   </div>
                 </div>
               </div>
+
 
               {/* Right Column: Interaction Arrow & Action Indicator */}
               <div className="flex items-center justify-between md:justify-end gap-4 pt-4 md:pt-0 border-t md:border-t-0 border-white/[0.04]">

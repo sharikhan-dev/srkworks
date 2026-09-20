@@ -83,7 +83,7 @@ export function ContactSection({ settings }: ContactSectionProps) {
             </div>
 
             {/* Required Headline: LET'S BUILD SOMETHING USEFUL. */}
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-6 uppercase leading-[1.06] font-sans">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-4 sm:mb-6 uppercase leading-[1.08] font-sans">
               {headlineLines.map((line, i) => (
                 <span key={i} className="block">
                   {line}
@@ -92,24 +92,24 @@ export function ContactSection({ settings }: ContactSectionProps) {
             </h2>
 
             {/* Required Supporting Text */}
-            <p className="text-base sm:text-lg text-neutral-400 leading-relaxed mb-10 max-w-lg">
+            <p className="text-sm sm:text-lg text-neutral-400 leading-relaxed mb-6 sm:mb-10 max-w-lg">
               {settings.contact_subtext ||
                 'Have an idea, product or business that needs a better digital experience?'}
             </p>
 
             {/* Direct Channels */}
-            <div className="space-y-3 mb-10">
+            <div className="space-y-3 mb-8 sm:mb-10">
               <a
                 href={`mailto:${settings.email || 'hello@sharikworks.com'}`}
-                className="flex items-center justify-between p-4 rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
+                className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs text-neutral-400 block font-mono">Direct Email</span>
-                    <span className="text-sm font-semibold text-white">{settings.email || 'hello@sharikworks.com'}</span>
+                    <span className="text-[10px] sm:text-xs text-neutral-400 block font-mono">Direct Email</span>
+                    <span className="text-xs sm:text-sm font-semibold text-white break-all">{settings.email || 'hello@sharikworks.com'}</span>
                   </div>
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -120,15 +120,15 @@ export function ContactSection({ settings }: ContactSectionProps) {
                   href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between p-4 rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
+                  className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
                       <MessageSquare className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-xs text-neutral-400 block font-mono">Instant Chat</span>
-                      <span className="text-sm font-semibold text-white">{settings.whatsapp}</span>
+                      <span className="text-[10px] sm:text-xs text-neutral-400 block font-mono">Instant Chat</span>
+                      <span className="text-xs sm:text-sm font-semibold text-white">{settings.whatsapp}</span>
                     </div>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -140,11 +140,11 @@ export function ContactSection({ settings }: ContactSectionProps) {
 
         {/* Right Column: Interactive Proposal Form */}
         <div className="lg:col-span-6">
-          <div className="rounded-3xl p-6 sm:p-10 glass-surface border border-white/10 relative">
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
+          <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-10 glass-surface border border-white/10 relative">
+            <h3 className="text-lg sm:text-2xl font-bold tracking-tight text-white mb-1.5 sm:mb-2">
               Start a Conversation
             </h3>
-            <p className="text-xs sm:text-sm text-neutral-400 mb-6">
+            <p className="text-xs sm:text-sm text-neutral-400 mb-5 sm:mb-6">
               Tell me about your roadmap, timeline, and goals. You'll receive a detailed response within 24 hours.
             </p>
 
@@ -152,13 +152,13 @@ export function ContactSection({ settings }: ContactSectionProps) {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-8 rounded-2xl bg-white/[0.04] border border-white/15 text-center my-6"
+                className="p-6 sm:p-8 rounded-2xl bg-white/[0.04] border border-white/15 text-center my-6"
               >
                 <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 text-emerald-400">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h4 className="text-lg font-bold text-white mb-2">Message Received</h4>
-                <p className="text-sm text-neutral-300 mb-6">
+                <h4 className="text-base sm:text-lg font-bold text-white mb-2">Message Received</h4>
+                <p className="text-xs sm:text-sm text-neutral-300 mb-6">
                   Thank you for reaching out. I'll review your project details and get back to you shortly.
                 </p>
                 <button
@@ -169,7 +169,7 @@ export function ContactSection({ settings }: ContactSectionProps) {
                 </button>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                 {errorMessage && (
                   <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -179,7 +179,7 @@ export function ContactSection({ settings }: ContactSectionProps) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+                    <label className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
                       Your Name *
                     </label>
                     <input
@@ -188,12 +188,12 @@ export function ContactSection({ settings }: ContactSectionProps) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Alex Mercer"
-                      className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                      className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-neutral-500 text-base sm:text-sm focus:outline-none focus:border-white/30 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+                    <label className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
                       Email Address *
                     </label>
                     <input
@@ -202,22 +202,22 @@ export function ContactSection({ settings }: ContactSectionProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="alex@company.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                      className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-neutral-500 text-base sm:text-sm focus:outline-none focus:border-white/30 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-2">
+                  <label className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-2">
                     Select Focus Area
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {SERVICE_OPTIONS.map((opt) => (
                       <button
                         type="button"
                         key={opt}
                         onClick={() => setService(opt)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                           service === opt
                             ? 'bg-white text-black font-semibold'
                             : 'bg-white/[0.03] text-neutral-400 hover:text-white border border-white/[0.06]'
@@ -229,10 +229,8 @@ export function ContactSection({ settings }: ContactSectionProps) {
                   </div>
                 </div>
 
-
-
                 <div>
-                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+                  <label className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
                     Project Overview *
                   </label>
                   <textarea
@@ -241,7 +239,7 @@ export function ContactSection({ settings }: ContactSectionProps) {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Describe your current product, target goals, or bottlenecks..."
-                    className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 transition-colors resize-none"
+                    className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-neutral-500 text-base sm:text-sm focus:outline-none focus:border-white/30 transition-colors resize-none"
                   />
                 </div>
 
@@ -249,7 +247,7 @@ export function ContactSection({ settings }: ContactSectionProps) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-6 rounded-full text-sm font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(255,255,255,0.2)] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3.5 px-6 rounded-full text-xs sm:text-sm font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(255,255,255,0.2)] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                 >
                   <span>{isSubmitting ? 'Sending Request...' : 'Start a Project →'}</span>
                   {!isSubmitting && <Send className="w-4 h-4" />}
@@ -258,6 +256,7 @@ export function ContactSection({ settings }: ContactSectionProps) {
             )}
           </div>
         </div>
+
       </div>
     </section>
   );

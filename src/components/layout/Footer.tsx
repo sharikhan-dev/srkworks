@@ -1,13 +1,14 @@
-import { ArrowUp, ArrowUpRight } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, Shield } from 'lucide-react';
 import { SiteSettings, SocialLink } from '../../types';
 
 interface FooterProps {
   settings: SiteSettings;
   socials?: SocialLink[];
   onNavigate: (sectionId: string) => void;
+  onOpenAdmin?: () => void;
 }
 
-export function Footer({ settings, socials, onNavigate }: FooterProps) {
+export function Footer({ settings, socials, onNavigate, onOpenAdmin }: FooterProps) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -77,8 +78,20 @@ export function Footer({ settings, socials, onNavigate }: FooterProps) {
 
       <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between text-[11px] text-neutral-500 font-mono gap-4">
         <span>© {new Date().getFullYear()} {brandName}. All rights reserved.</span>
-        <span>Editorial Liquid Glass Aesthetics</span>
+        
+        <div className="flex items-center gap-4">
+          <span className="hidden sm:inline">Editorial Liquid Glass Aesthetics</span>
+          <button
+            onClick={onOpenAdmin || (() => onNavigate('admin'))}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer border border-white/5"
+            title="Open Admin CMS Portal (Ctrl+Shift+A)"
+          >
+            <Shield className="w-3 h-3 text-neutral-400" />
+            <span>Admin CMS</span>
+          </button>
+        </div>
       </div>
     </footer>
   );
 }
+

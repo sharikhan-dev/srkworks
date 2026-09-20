@@ -162,23 +162,23 @@ export function AutomationShowcase() {
   return (
     <section id="automation" className="py-24 px-4 sm:px-6 max-w-6xl mx-auto relative">
       {/* Header */}
-      <div className="text-center max-w-2xl mx-auto mb-12">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full glass-pill mb-4">
+      <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4">
           <Cpu className="w-3.5 h-3.5 text-neutral-300" />
-          <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-300">
+          <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-neutral-300">
             Intelligent Systems
           </span>
         </div>
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-3 sm:mb-4">
           How AI Automation Actually Works.
         </h2>
-        <p className="text-neutral-400 text-sm sm:text-base leading-relaxed">
+        <p className="text-neutral-400 text-xs sm:text-base leading-relaxed">
           No vague buzzwords or exaggerated hype. Real workflow automation connects event triggers, intelligent AI context processing, and programmatic APIs to eliminate operational drag.
         </p>
       </div>
 
       {/* Scenario Selector Tabs */}
-      <div className="flex flex-wrap justify-center items-center gap-2 mb-10">
+      <div className="flex items-center sm:justify-center gap-1.5 sm:gap-2 mb-8 sm:mb-10 max-w-full overflow-x-auto scrollbar-none pb-1">
         {SCENARIOS.map((s) => (
           <button
             key={s.id}
@@ -186,7 +186,7 @@ export function AutomationShowcase() {
               setActiveScenarioId(s.id);
               resetSimulation();
             }}
-            className={`px-4 py-2 rounded-2xl text-xs font-semibold transition-all ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeScenarioId === s.id
                 ? 'bg-white text-black shadow-md'
                 : 'glass-surface text-neutral-400 hover:text-white'
@@ -198,11 +198,11 @@ export function AutomationShowcase() {
       </div>
 
       {/* Interactive Simulation Dashboard Canvas */}
-      <div className="glass-surface rounded-3xl p-6 sm:p-8 md:p-10 border border-white/10 relative overflow-hidden">
+      <div className="glass-surface rounded-2xl sm:rounded-3xl p-4 sm:p-8 md:p-10 border border-white/10 relative overflow-hidden">
         {/* Top Control Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-8 border-b border-white/[0.08]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 sm:pb-6 mb-6 sm:mb-8 border-b border-white/[0.08]">
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <Activity className="w-4 h-4 text-emerald-400" />
               <span>{currentScenario.name}</span>
             </h3>
@@ -211,11 +211,11 @@ export function AutomationShowcase() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={runSimulation}
               disabled={isRunning}
-              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`flex-1 sm:flex-none justify-center px-4 py-2.5 sm:py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 isRunning
                   ? 'bg-emerald-500/20 text-emerald-300 cursor-not-allowed border border-emerald-500/30'
                   : 'bg-white text-black hover:bg-neutral-200'
@@ -228,7 +228,7 @@ export function AutomationShowcase() {
             {simulatingStep > 0 && (
               <button
                 onClick={resetSimulation}
-                className="p-2 rounded-full glass-pill text-neutral-400 hover:text-white"
+                className="p-2 rounded-full glass-pill text-neutral-400 hover:text-white cursor-pointer"
                 title="Reset simulation"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -236,6 +236,7 @@ export function AutomationShowcase() {
             )}
           </div>
         </div>
+
 
         {/* 4-Step Visual Sequence */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">

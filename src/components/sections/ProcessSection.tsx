@@ -50,21 +50,21 @@ export function ProcessSection() {
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="mb-16 sm:mb-20"
       >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-4 border border-white/10">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-neutral-300">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
+          <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-300">
             Methodology
           </span>
         </div>
-        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
+        <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
           HOW I WORK
         </h2>
-        <p className="text-neutral-400 text-sm sm:text-base max-w-xl mt-4 leading-relaxed">
+        <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
           A disciplined, four-phase delivery cycle that ensures mathematical clarity, zero surprises, and rapid velocity.
         </p>
       </motion.div>
 
       {/* Horizontal Editorial Layout on Desktop, Vertical on Mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
         {PROCESS_STEPS.map((step, index) => {
           const Icon = step.icon;
           return (
@@ -74,12 +74,13 @@ export function ProcessSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="glass-surface glass-surface-hover rounded-3xl p-7 flex flex-col justify-between relative overflow-hidden group border border-white/10 transition-all duration-500"
+              className="glass-surface glass-surface-hover rounded-2xl sm:rounded-3xl p-5 sm:p-7 flex flex-col justify-between relative overflow-hidden group border border-white/10 transition-all duration-500"
             >
               {/* Step Top Header */}
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-2xl sm:text-3xl font-mono font-bold text-white/40 group-hover:text-white transition-colors duration-300">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <span className="text-xl sm:text-3xl font-mono font-bold text-white/40 group-hover:text-white transition-colors duration-300">
+
                     {step.step}
                   </span>
 

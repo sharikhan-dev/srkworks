@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Shield } from 'lucide-react';
 import { NavbarSettings, SiteSettings } from '../../types';
 
 interface NavbarProps {
@@ -8,9 +8,10 @@ interface NavbarProps {
   navbar?: NavbarSettings;
   activeSection: string;
   onNavigate: (sectionId: string) => void;
+  onOpenAdmin?: () => void;
 }
 
-export function Navbar({ settings, navbar, activeSection, onNavigate }: NavbarProps) {
+export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmin }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -53,8 +54,16 @@ export function Navbar({ settings, navbar, activeSection, onNavigate }: NavbarPr
     : defaultNavItems;
 
   const handleItemClick = (target: string) => {
-    const cleanId = target.replace('#', '');
-    onNavigate(cleanId);
+    const cleanId = target.replace(/^[#/]+/, '').toLowerCase();
+    if (cleanId === 'admin' || target.toLowerCase().includes('admin')) {
+      if (onOpenAdmin) {
+        onOpenAdmin();
+      } else {
+        onNavigate('admin');
+      }
+    } else {
+      onNavigate(target.replace('#', ''));
+    }
     setMobileMenuOpen(false);
   };
 
@@ -145,44 +154,59 @@ export function Navbar({ settings, navbar, activeSection, onNavigate }: NavbarPr
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-40 bg-[#090a0d]/95 backdrop-blur-3xl pt-24 px-6 flex flex-col justify-between pb-12 md:hidden"
+            className="fixed inset-0 z-40 bg-[#090a0d]/95 backdrop-blur-3xl pt-20 px-6 pb-8 md:hidden overflow-y-auto"
           >
-            <div className="space-y-4 pt-4">
-              <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase block pl-2">
-                Navigation
-              </span>
+            <div className="min-h-full flex flex-col justify-between">
+              <div className="space-y-3 pt-4">
+                <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase block pl-2">
+                  Navigation
+                </span>
 
-              {activeItems.map((item) => {
-                const cleanId = item.url.replace('#', '');
-                const isActive = activeSection === cleanId;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleItemClick(item.url)}
-                    className={`w-full text-left py-3 px-4 rounded-2xl text-xl font-semibold transition-all flex items-center justify-between cursor-pointer ${
-                      isActive
-                        ? 'text-white bg-white/10 border border-white/15'
-                        : 'text-neutral-400 hover:text-white'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    <ArrowUpRight className="w-4 h-4 text-neutral-500" />
-                  </button>
-                );
-              })}
-            </div>
+                {activeItems.map((item) => {
+                  const cleanId = item.url.replace('#', '');
+                  const isActive = activeSection === cleanId;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleItemClick(item.url)}
+                      className={`w-full text-left py-3 px-4 rounded-2xl text-lg sm:text-xl font-semibold transition-all flex items-center justify-between cursor-pointer ${
+                        isActive
+                          ? 'text-white bg-white/10 border border-white/15'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      <ArrowUpRight className="w-4 h-4 text-neutral-500" />
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className="space-y-4 pt-6 border-t border-white/10">
-              <button
-                onClick={() => handleItemClick(ctaUrl)}
-                className="w-full py-4 text-sm font-bold text-black bg-white rounded-2xl text-center shadow-lg cursor-pointer"
-              >
-                {ctaText}
-              </button>
+              <div className="space-y-3 pt-6 border-t border-white/10 mt-6">
+                <button
+                  onClick={() => handleItemClick(ctaUrl)}
+                  className="w-full py-3.5 text-sm font-bold text-black bg-white rounded-2xl text-center shadow-lg cursor-pointer active:scale-98 transition-transform"
+                >
+                  {ctaText}
+                </button>
+
+                {/* Direct Admin Console Access on Mobile */}
+                <button
+                  onClick={() => handleItemClick('#admin')}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-mono text-neutral-400 hover:text-white hover:bg-white/5 flex items-center justify-between border border-white/5 transition-colors cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <Shield className="w-3.5 h-3.5 text-neutral-400" />
+                    <span>Admin CMS Portal</span>
+                  </span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-neutral-500" />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
     </>
   );
 }

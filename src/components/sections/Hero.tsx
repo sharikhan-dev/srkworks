@@ -86,11 +86,11 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
         ref={heroCardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="hero-glass-container specular-border-top relative rounded-[2.25rem] sm:rounded-[3rem] overflow-hidden p-6 sm:p-12 md:p-16 min-h-[82vh] md:min-h-[86vh] flex flex-col justify-between border border-white/[0.12] transition-shadow duration-700 hover:shadow-[0_40px_90px_-20px_rgba(0,0,0,0.85)]"
+        className="hero-glass-container specular-border-top relative rounded-3xl sm:rounded-[3rem] overflow-hidden p-5 sm:p-12 md:p-16 min-h-[78vh] sm:min-h-[82vh] md:min-h-[86vh] flex flex-col justify-between border border-white/[0.12] transition-shadow duration-700 hover:shadow-[0_40px_90px_-20px_rgba(0,0,0,0.85)]"
       >
         {/* Ambient Backlight Glows */}
-        <div className="absolute -top-24 -right-24 w-[450px] sm:w-[650px] h-[450px] sm:h-[650px] bg-gradient-to-br from-white/[0.06] via-neutral-400/[0.03] to-transparent rounded-full blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute -bottom-32 -left-24 w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] bg-white/[0.03] rounded-full blur-[100px] pointer-events-none -z-10" />
+        <div className="absolute -top-24 -right-24 w-[350px] sm:w-[650px] h-[350px] sm:h-[650px] bg-gradient-to-br from-white/[0.06] via-neutral-400/[0.03] to-transparent rounded-full blur-[100px] sm:blur-[120px] pointer-events-none -z-10" />
+        <div className="absolute -bottom-32 -left-24 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/[0.03] rounded-full blur-[90px] sm:blur-[100px] pointer-events-none -z-10" />
 
         {/* Integrated 3D Glass Sculpture with cursor parallax */}
         <motion.div
@@ -100,7 +100,7 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
               : `translate3d(${mousePos.x * -0.8}px, ${mousePos.y * -0.8}px, 0)`
           }}
           transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-          className="absolute right-[-10%] sm:right-[-4%] md:right-[2%] top-[14%] md:top-[8%] w-[340px] sm:w-[500px] md:w-[620px] lg:w-[680px] aspect-square pointer-events-none select-none -z-0 opacity-40 sm:opacity-55 md:opacity-75 transition-opacity duration-700"
+          className="absolute right-[-15%] sm:right-[-4%] md:right-[2%] top-[20%] sm:top-[14%] md:top-[8%] w-[260px] sm:w-[420px] md:w-[620px] lg:w-[680px] aspect-square pointer-events-none select-none -z-0 opacity-30 sm:opacity-55 md:opacity-75 transition-opacity duration-700"
         >
           <div className="relative w-full h-full">
             <img
@@ -135,13 +135,13 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill mb-6 sm:mb-8 border border-white/10"
+            className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full glass-pill mb-4 sm:mb-8 border border-white/10"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
-            <span className="text-[11px] sm:text-xs font-mono uppercase tracking-[0.2em] text-neutral-300 font-medium">
+            <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.16em] sm:tracking-[0.2em] text-neutral-300 font-medium">
               {eyebrow}
             </span>
           </motion.div>
@@ -151,26 +151,26 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-6 select-none"
+            className="mb-5 sm:mb-6 select-none"
           >
-            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[5.2rem] font-semibold tracking-[-0.03em] text-white leading-[1.06]">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[5.2rem] font-semibold tracking-[-0.03em] text-white leading-[1.08]">
               <span className="block text-white/90 font-medium">
                 {headline}
               </span>
 
               {/* Dynamic Animated Word Carousel */}
-              <div className="h-[1.18em] relative overflow-hidden mt-1">
+              <div className="h-[1.25em] min-h-[38px] sm:min-h-[56px] md:min-h-[72px] relative overflow-hidden mt-1">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={phraseIndex}
-                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 18 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -20 }}
+                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -18 }}
                     transition={{
                       duration: 0.45,
                       ease: [0.16, 1, 0.3, 1]
                     }}
-                    className="block absolute inset-0 bg-gradient-to-r from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent font-semibold tracking-[-0.03em] drop-shadow-sm whitespace-nowrap"
+                    className="block absolute inset-0 bg-gradient-to-r from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent font-semibold tracking-[-0.03em] drop-shadow-sm truncate"
                   >
                     {phrases[phraseIndex]}
                   </motion.span>
@@ -184,7 +184,7 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="text-base sm:text-lg md:text-xl text-neutral-300/90 font-light sm:font-normal leading-relaxed mb-8 sm:mb-10 max-w-xl text-balance"
+            className="text-sm sm:text-lg md:text-xl text-neutral-300/90 font-light sm:font-normal leading-relaxed mb-6 sm:mb-10 max-w-xl text-balance"
           >
             {supportingText}
           </motion.p>
@@ -194,12 +194,12 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto"
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto"
           >
             <button
               id="hero-primary-cta"
               onClick={() => handleCtaClick(primaryCtaUrl)}
-              className="px-7 py-3.5 text-sm font-semibold text-black bg-white hover:bg-neutral-200 rounded-full transition-all duration-300 shadow-[0_0_35px_rgba(255,255,255,0.25)] hover:shadow-[0_0_45px_rgba(255,255,255,0.4)] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
+              className="px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-black bg-white hover:bg-neutral-200 rounded-full transition-all duration-300 shadow-[0_0_35px_rgba(255,255,255,0.25)] hover:shadow-[0_0_45px_rgba(255,255,255,0.4)] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
             >
               <span>{primaryCtaText}</span>
               <ArrowDown className="w-4 h-4 text-black transition-transform group-hover:translate-y-0.5" />
@@ -208,7 +208,7 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
             <button
               id="hero-secondary-cta"
               onClick={() => handleCtaClick(secondaryCtaUrl)}
-              className="px-7 py-3.5 text-sm font-medium text-neutral-200 hover:text-white glass-pill hover:bg-white/10 rounded-full transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 border border-white/15 cursor-pointer"
+              className="px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-medium text-neutral-200 hover:text-white glass-pill hover:bg-white/10 rounded-full transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 border border-white/15 cursor-pointer"
             >
               <span>{secondaryCtaText}</span>
               <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -221,65 +221,66 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 mt-14 sm:mt-16 pt-8 border-t border-white/[0.08] grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"
+          className="relative z-10 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-white/[0.08] grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6"
         >
           <div
             onClick={() => onNavigate('services')}
-            className="group p-4 sm:p-5 rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-3"
+            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400">01 / CRAFT</span>
-              <Layout className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">01 / CRAFT</span>
+              <Layout className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
             </div>
             <div>
-              <span className="text-sm sm:text-base font-semibold text-white block">UI/UX Design</span>
-              <span className="text-xs text-neutral-400 mt-0.5 block">Design Systems & Figma</span>
+              <span className="text-xs sm:text-base font-semibold text-white block truncate">UI/UX Design</span>
+              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">Design Systems & Figma</span>
             </div>
           </div>
 
           <div
             onClick={() => onNavigate('services')}
-            className="group p-4 sm:p-5 rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-3"
+            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400">02 / CODE</span>
-              <Code2 className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">02 / CODE</span>
+              <Code2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
             </div>
             <div>
-              <span className="text-sm sm:text-base font-semibold text-white block">Web Development</span>
-              <span className="text-xs text-neutral-400 mt-0.5 block">React, Next.js, Motion</span>
+              <span className="text-xs sm:text-base font-semibold text-white block truncate">Web Development</span>
+              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">React, Next.js, Motion</span>
             </div>
           </div>
 
           <div
             onClick={() => onNavigate('services')}
-            className="group p-4 sm:p-5 rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-3"
+            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400">03 / FLOW</span>
-              <Cpu className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">03 / FLOW</span>
+              <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
             </div>
             <div>
-              <span className="text-sm sm:text-base font-semibold text-white block">AI Automation</span>
-              <span className="text-xs text-neutral-400 mt-0.5 block">Pipelines & Workflows</span>
+              <span className="text-xs sm:text-base font-semibold text-white block truncate">AI Automation</span>
+              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">Pipelines & Workflows</span>
             </div>
           </div>
 
           <div
             onClick={() => onNavigate('services')}
-            className="group p-4 sm:p-5 rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-3"
+            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400">04 / INTEL</span>
-              <Bot className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">04 / INTEL</span>
+              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
             </div>
             <div>
-              <span className="text-sm sm:text-base font-semibold text-white block">AI Solutions</span>
-              <span className="text-xs text-neutral-400 mt-0.5 block">Chatbots & LLM Tools</span>
+              <span className="text-xs sm:text-base font-semibold text-white block truncate">AI Solutions</span>
+              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">Chatbots & LLM Tools</span>
             </div>
           </div>
         </motion.div>
       </div>
+
     </section>
   );
 }
