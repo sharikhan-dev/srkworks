@@ -164,22 +164,24 @@ export const db = {
 
   // === SITE SETTINGS ===
   async getSiteSettings(): Promise<SiteSettings> {
-    const local = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('site_settings').select('*').limit(1).single();
+        const { data, error } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
         if (!error && data) {
-          // If local has more recent update or valid name, prefer local
-          if (local.updated_at && data.updated_at && new Date(local.updated_at) > new Date(data.updated_at)) {
-            return local;
-          }
-          return { ...local, ...data };
+          const merged: SiteSettings = {
+            ...INITIAL_SITE_SETTINGS,
+            ...data,
+            hero_phrases: data.hero_phrases && data.hero_phrases.length > 0 ? data.hero_phrases : INITIAL_SITE_SETTINGS.hero_phrases
+          };
+          setLocalData(STORAGE_KEYS.SETTINGS, merged);
+          return merged;
         }
       } catch (err) {
         console.warn('Supabase getSiteSettings error, falling back to local storage:', err);
       }
     }
+    const local = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
     return {
       ...INITIAL_SITE_SETTINGS,
       ...local,
@@ -189,35 +191,13 @@ export const db = {
 
   async updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
     const current = await this.getSiteSettings();
-    const updated = {
+    const FIXED_SITE_SETTINGS_ID = '00000000-0000-0000-0000-000000000001';
+    const updated: SiteSettings & { id: string } = {
       ...current,
       ...settings,
+      id: (current as any).id || FIXED_SITE_SETTINGS_ID,
       updated_at: new Date().toISOString()
     };
-
-    // Keep navbar brand name and logo_initial synchronized with site settings
-    if (settings.name || settings.logo_initial) {
-      const currentNav = getLocalData<NavbarSettings>(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
-      const updatedNav: NavbarSettings = {
-        ...currentNav,
-        ...(settings.name ? { brand_name: settings.name } : {}),
-        ...(settings.logo_initial ? { logo_initial: settings.logo_initial } : {})
-      };
-      setLocalData(STORAGE_KEYS.NAVBAR, updatedNav);
-    }
-
-    // Keep hero image and hero texts in sync if profile image/badge changed
-    if (settings.profile_image || settings.title_badge || settings.headline || settings.hero_supporting_text) {
-      const currentHero = getLocalData<HeroSettings>(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
-      const updatedHero: HeroSettings = {
-        ...currentHero,
-        ...(settings.profile_image ? { hero_image: settings.profile_image } : {}),
-        ...(settings.title_badge ? { eyebrow: settings.title_badge } : {}),
-        ...(settings.headline ? { headline: settings.headline } : {}),
-        ...(settings.hero_supporting_text ? { supporting_text: settings.hero_supporting_text } : {})
-      };
-      setLocalData(STORAGE_KEYS.HERO, updatedHero);
-    }
 
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -228,6 +208,25 @@ export const db = {
         console.warn('Supabase updateSiteSettings error:', err);
       }
     }
+
+    // Keep navbar brand name and logo_initial synchronized with site settings
+    if (settings.name || settings.logo_initial) {
+      await this.updateNavbarSettings({
+        ...(settings.name ? { brand_name: settings.name } : {}),
+        ...(settings.logo_initial ? { logo_initial: settings.logo_initial } : {})
+      });
+    }
+
+    // Keep hero image and hero texts in sync if profile image/badge changed
+    if (settings.profile_image || settings.title_badge || settings.headline || settings.hero_supporting_text) {
+      await this.updateHeroSettings({
+        ...(settings.profile_image ? { hero_image: settings.profile_image } : {}),
+        ...(settings.title_badge ? { eyebrow: settings.title_badge } : {}),
+        ...(settings.headline ? { headline: settings.headline } : {}),
+        ...(settings.hero_supporting_text ? { supporting_text: settings.hero_supporting_text } : {})
+      });
+    }
+
     setLocalData(STORAGE_KEYS.SETTINGS, updated);
     return updated;
   },
@@ -795,8 +794,12 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('theme_settings').select('*').limit(1).single();
-        if (!error && data) return data;
+        const { data, error } = await supabase.from('theme_settings').select('*').limit(1).maybeSingle();
+        if (!error && data) {
+          const merged = { ...INITIAL_THEME_SETTINGS, ...data };
+          setLocalData(STORAGE_KEYS.THEME, merged);
+          return merged;
+        }
       } catch (err) {
         console.warn('Supabase getThemeSettings error:', err);
       }
@@ -806,7 +809,7 @@ export const db = {
 
   async updateThemeSettings(theme: Partial<ThemeSettings>): Promise<ThemeSettings> {
     const current = await this.getThemeSettings();
-    const updated = { ...current, ...theme };
+    const updated = { ...current, ...theme, id: (current as any).id || 'current_theme' };
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -824,8 +827,12 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('hero_settings').select('*').limit(1).single();
-        if (!error && data) return data;
+        const { data, error } = await supabase.from('hero_settings').select('*').limit(1).maybeSingle();
+        if (!error && data) {
+          const merged = { ...INITIAL_HERO_SETTINGS, ...data };
+          setLocalData(STORAGE_KEYS.HERO, merged);
+          return merged;
+        }
       } catch (err) {
         console.warn('Supabase getHeroSettings error:', err);
       }
@@ -835,7 +842,7 @@ export const db = {
 
   async updateHeroSettings(hero: Partial<HeroSettings>): Promise<HeroSettings> {
     const current = await this.getHeroSettings();
-    const updated = { ...current, ...hero };
+    const updated = { ...current, ...hero, id: (current as any).id || 'current_hero' };
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -853,8 +860,12 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('navbar_settings').select('*').limit(1).single();
-        if (!error && data) return data;
+        const { data, error } = await supabase.from('navbar_settings').select('*').limit(1).maybeSingle();
+        if (!error && data) {
+          const merged = { ...INITIAL_NAVBAR_SETTINGS, ...data };
+          setLocalData(STORAGE_KEYS.NAVBAR, merged);
+          return merged;
+        }
       } catch (err) {
         console.warn('Supabase getNavbarSettings error:', err);
       }
@@ -864,7 +875,7 @@ export const db = {
 
   async updateNavbarSettings(navbar: Partial<NavbarSettings>): Promise<NavbarSettings> {
     const current = await this.getNavbarSettings();
-    const updated = { ...current, ...navbar };
+    const updated = { ...current, ...navbar, id: (current as any).id || 'current_navbar' };
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -882,8 +893,12 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('about_settings').select('*').limit(1).single();
-        if (!error && data) return data;
+        const { data, error } = await supabase.from('about_settings').select('*').limit(1).maybeSingle();
+        if (!error && data) {
+          const merged = { ...INITIAL_ABOUT_SETTINGS, ...data };
+          setLocalData(STORAGE_KEYS.ABOUT, merged);
+          return merged;
+        }
       } catch (err) {
         console.warn('Supabase getAboutSettings error:', err);
       }
@@ -893,7 +908,7 @@ export const db = {
 
   async updateAboutSettings(about: Partial<AboutSettings>): Promise<AboutSettings> {
     const current = await this.getAboutSettings();
-    const updated = { ...current, ...about };
+    const updated = { ...current, ...about, id: (current as any).id || 'current_about' };
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -911,8 +926,12 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('section_settings').select('*').limit(1).single();
-        if (!error && data) return data;
+        const { data, error } = await supabase.from('section_settings').select('*').limit(1).maybeSingle();
+        if (!error && data) {
+          const merged = { ...INITIAL_SECTION_VISIBILITY, ...data };
+          setLocalData(STORAGE_KEYS.SECTIONS, merged);
+          return merged;
+        }
       } catch (err) {
         console.warn('Supabase getSectionVisibility error:', err);
       }
@@ -922,7 +941,7 @@ export const db = {
 
   async updateSectionVisibility(visibility: Partial<SectionVisibility>): Promise<SectionVisibility> {
     const current = await this.getSectionVisibility();
-    const updated = { ...current, ...visibility };
+    const updated = { ...current, ...visibility, id: (current as any).id || 'current_sections' };
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
