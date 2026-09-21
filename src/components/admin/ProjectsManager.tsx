@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Project } from '../../types';
 import { db } from '../../services/db';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 interface ProjectsManagerProps {
   projects: Project[];
@@ -36,20 +37,23 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [urlError, setUrlError] = useState<string>('');
+  const [modalError, setModalError] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [customCategory, setCustomCategory] = useState<string>('');
   const [selectedCategorySelect, setSelectedCategorySelect] = useState<string>('UI/UX Design');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalScrollRef = useRef<HTMLDivElement>(null);
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setStatusMessage({ type, text });
-    setTimeout(() => setStatusMessage(null), 3500);
+    setTimeout(() => setStatusMessage(null), 4000);
   };
 
   const handleCreateNew = () => {
     setSelectedCategorySelect('UI/UX Design');
     setCustomCategory('');
     setUrlError('');
+    setModalError('');
     setEditingProject({
       name: '',
       title: '',
@@ -68,6 +72,7 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
 
   const handleStartEdit = (proj: Project) => {
     setUrlError('');
+    setModalError('');
     const cat = proj.category || 'UI/UX Design';
     if (CATEGORY_OPTIONS.includes(cat) && cat !== 'Custom...') {
       setSelectedCategorySelect(cat);
@@ -115,18 +120,22 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProject?.name?.trim()) {
-      showFeedback('Project title/name is required.', 'error');
+    setModalError('');
+
+    const projectName = (editingProject?.name || editingProject?.title || '').trim();
+    if (!projectName) {
+      setModalError('Project Name (Field #2) is required. Please scroll up and enter a title.');
+      modalScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     // Validate and auto-normalize URL
     const { url: targetUrl, error: urlValidationError } = normalizeAndValidateUrl(
-      editingProject.case_study_url || editingProject.live_url || ''
+      editingProject?.case_study_url || editingProject?.live_url || ''
     );
     if (urlValidationError) {
       setUrlError(urlValidationError);
-      showFeedback(urlValidationError, 'error');
+      setModalError(urlValidationError);
       return;
     }
     setUrlError('');
@@ -140,26 +149,32 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
     try {
       const payload: Partial<Project> & { name: string } = {
         ...editingProject,
-        name: editingProject.name.trim(),
-        title: editingProject.name.trim(),
+        name: projectName,
+        title: projectName,
         category: finalCategory,
-        short_description: (editingProject.short_description || '').trim(),
-        description: (editingProject.short_description || '').trim(),
-        year: (editingProject.year || String(new Date().getFullYear())).trim(),
-        cover_image: editingProject.cover_image || editingProject.image_url || '',
-        image_url: editingProject.cover_image || editingProject.image_url || '',
+        short_description: (editingProject?.short_description || '').trim(),
+        description: (editingProject?.short_description || '').trim(),
+        year: (editingProject?.year || String(new Date().getFullYear())).trim(),
+        cover_image: editingProject?.cover_image || editingProject?.image_url || '',
+        image_url: editingProject?.cover_image || editingProject?.image_url || '',
         case_study_url: targetUrl,
         live_url: targetUrl,
-        button_text: (editingProject.button_text || '').trim() || 'View Case Study ↗'
+        button_text: (editingProject?.button_text || '').trim() || 'View Case Study ↗'
       };
 
       await db.saveProject(payload);
       setEditingProject(null);
-      showFeedback(`Project "${payload.title}" saved and verified in Supabase!`, 'success');
+      if (isSupabaseConfigured()) {
+        showFeedback(`Project "${payload.title}" saved & synced with Supabase!`, 'success');
+      } else {
+        showFeedback(`Project "${payload.title}" saved locally! Note: Connect Supabase in Website Settings to sync to mobile.`, 'success');
+      }
       await onRefresh();
     } catch (err: any) {
-      console.error('Error saving project to Supabase:', err);
-      showFeedback(err?.message || 'Failed to save project. Please verify Supabase connection.', 'error');
+      console.error('Error saving project:', err);
+      const errMsg = err?.message || 'Failed to save project. Please check database connection.';
+      setModalError(errMsg);
+      modalScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSaving(false);
     }
@@ -363,7 +378,7 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
       {/* ============================================================ */}
       {editingProject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#10121a] border border-white/15 rounded-3xl p-6 sm:p-8 text-left shadow-2xl">
+          <div ref={modalScrollRef} className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#10121a] border border-white/15 rounded-3xl p-6 sm:p-8 text-left shadow-2xl">
             <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10">
               <div>
                 <h3 className="text-lg font-bold text-white">
@@ -381,7 +396,30 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-6">
+            <form noValidate onSubmit={handleSave} className="space-y-6">
+              {/* Unconfigured Warning Notice */}
+              {!isSupabaseConfigured() && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                  <div className="space-y-0.5 flex-1">
+                    <span className="font-semibold block text-amber-200">Supabase Not Connected</span>
+                    <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                      Projects will be saved in this browser. To synchronize across all devices and phones, configure Supabase in <strong className="text-amber-200">Website Settings</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Notice */}
+              {modalError && (
+                <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-400" />
+                  <div className="space-y-0.5 flex-1">
+                    <span className="font-semibold block text-red-200">Cannot Save Project</span>
+                    <p className="text-[11px] text-red-300 leading-relaxed">{modalError}</p>
+                  </div>
+                </div>
+              )}
               {/* 1. PROJECT IMAGE UPLOAD & PREVIEW */}
               <div>
                 <label className="text-xs font-mono uppercase text-neutral-300 block mb-2 font-medium">
@@ -476,18 +514,28 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
                 </label>
                 <input
                   type="text"
-                  required
                   value={editingProject.name || ''}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setEditingProject({
                       ...editingProject,
                       name: e.target.value,
                       title: e.target.value
-                    })
-                  }
-                  placeholder='e.g. Zwigato — Food Delivery UI'
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:outline-none focus:border-white/40"
+                    });
+                    if (modalError) setModalError('');
+                  }}
+                  placeholder='e.g. PaletteGen — Modern Color Palette Generator'
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border text-white text-xs focus:outline-none ${
+                    modalError && !editingProject.name?.trim()
+                      ? 'border-red-500 ring-1 ring-red-500/50'
+                      : 'border-white/10 focus:border-white/40'
+                  }`}
                 />
+                {modalError && !editingProject.name?.trim() && (
+                  <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                    <span>Project name is required.</span>
+                  </p>
+                )}
               </div>
 
               {/* 3. CATEGORY */}
@@ -620,6 +668,14 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
                 />
               </div>
 
+              {/* Modal inline error above buttons if any */}
+              {modalError && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 text-red-400" />
+                  <span className="truncate">{modalError}</span>
+                </div>
+              )}
+
               {/* Modal action buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                 <button
@@ -632,9 +688,10 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-colors shadow-md cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-colors shadow-md cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {isSaving ? 'Saving...' : 'Save Project'}
+                  {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin text-black" />}
+                  <span>{isSaving ? 'Saving Project...' : 'Save Project'}</span>
                 </button>
               </div>
             </form>

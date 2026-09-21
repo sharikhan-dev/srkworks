@@ -86,14 +86,7 @@ export function syncWithSeedData(force = false) {
   const savedFingerprint = localStorage.getItem(SEED_FINGERPRINT_KEY);
 
   if (force || !savedFingerprint || savedFingerprint !== currentFingerprint) {
-    // 1. Clean up legacy local project cache to prevent stale dummy data
-    try {
-      localStorage.removeItem(STORAGE_KEYS.PROJECTS);
-    } catch {
-      // ignore
-    }
-
-    // 2. SETTINGS: If force or first time, load seed settings; if file changed, merge seed updates
+    // 1. SETTINGS: If force or first time, load seed settings; if file changed, merge seed updates
     if (force || !savedFingerprint) {
       setLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
       setLocalData(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
@@ -103,7 +96,7 @@ export function syncWithSeedData(force = false) {
       setLocalData(STORAGE_KEYS.SETTINGS, { ...existingSettings, ...INITIAL_SITE_SETTINGS });
     }
 
-    // 3. Ensure other collections exist
+    // 2. Ensure other collections exist
     if (force || !localStorage.getItem(STORAGE_KEYS.SERVICES)) {
       setLocalData(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
     }
@@ -133,13 +126,6 @@ export function syncWithSeedData(force = false) {
 // Ensure local persistence is initialized without dummy projects or sample messages
 export function initializeLocalStorageIfNeeded() {
   syncWithSeedData(false);
-
-  // Clean out any lingering local projects cache
-  try {
-    localStorage.removeItem(STORAGE_KEYS.PROJECTS);
-  } catch {
-    // ignore
-  }
 
   // Initialize messages as empty array (no dummy messages)
   if (!localStorage.getItem(STORAGE_KEYS.MESSAGES)) {
@@ -266,27 +252,26 @@ export const db = {
           throw new Error(`Failed to load projects from Supabase: ${error.message}`);
         }
 
-        return data || [];
+        const projects = data || [];
+        // Keep local mirror synchronized
+        setLocalData(STORAGE_KEYS.PROJECTS, projects);
+        return projects;
       } catch (err) {
         console.error('Failed to fetch projects from Supabase:', err);
         throw err;
       }
     }
 
-    // If Supabase is not configured, return empty array (do NOT fallback to dummy projects)
-    console.warn('Supabase client is not configured. Projects table cannot be loaded.');
-    return [];
+    // If Supabase is not configured yet, load user-created projects from local storage (no dummy projects)
+    const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
+    const sorted = [...local].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    return publicOnly ? sorted.filter(p => p.published) : sorted;
   },
 
   async saveProject(project: Partial<Project> & { name: string }): Promise<Project> {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      throw new Error('Supabase is not configured. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
-    }
-
     const title = (project.title || project.name || '').trim();
     if (!title) {
-      throw new Error('Project title is required.');
+      throw new Error('Project title/name is required. Please fill in field #2.');
     }
 
     const id = project.id || `proj-${Date.now()}`;
@@ -334,44 +319,70 @@ export const db = {
       updated_at: new Date().toISOString()
     };
 
-    // 1. Upsert to Supabase
-    const { data: savedData, error: saveError } = await supabase
-      .from('projects')
-      .upsert([fullProject], { onConflict: 'id' })
-      .select()
-      .single();
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      // 1. Upsert to Supabase
+      const { error: saveError } = await supabase
+        .from('projects')
+        .upsert([fullProject], { onConflict: 'id' });
 
-    if (saveError) {
-      console.error('Supabase saveProject error:', saveError);
-      throw new Error(`Supabase save error (${saveError.code || 'DB_ERROR'}): ${saveError.message}`);
+      if (saveError) {
+        console.error('Supabase saveProject error:', saveError);
+        if (saveError.code === '42P01') {
+          throw new Error("Supabase table 'projects' does not exist yet. Please go to Website Settings -> '1-Click Supabase PostgreSQL Schema' and run the SQL script in your Supabase SQL Editor.");
+        }
+        if (saveError.code === '42501') {
+          throw new Error("Supabase permission denied (RLS). Please run the 1-Click SQL Setup script from Website Settings to permit project insert/update.");
+        }
+        throw new Error(`Supabase save error (${saveError.code || 'DB_ERROR'}): ${saveError.message}`);
+      }
+
+      // 2. Strict Verification: Query the record back from Supabase to confirm persistence
+      const { data: verifiedRows, error: verifyError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id);
+
+      if (verifyError) {
+        console.error('Supabase verification error:', verifyError);
+        throw new Error(`Supabase verification error: ${verifyError.message}`);
+      }
+
+      if (!verifiedRows || verifiedRows.length === 0) {
+        throw new Error('Supabase verification failed: Project was saved, but cannot be read back. Check Row Level Security (RLS) policies on your Supabase projects table.');
+      }
+
+      // Update local storage mirror
+      const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
+      const idx = local.findIndex(p => p.id === id);
+      if (idx >= 0) local[idx] = verifiedRows[0] as Project;
+      else local.push(verifiedRows[0] as Project);
+      setLocalData(STORAGE_KEYS.PROJECTS, local);
+
+      return verifiedRows[0] as Project;
     }
 
-    // 2. Strict Verification: Query the record back from Supabase to confirm persistence
-    const { data: verifiedRecord, error: verifyError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // If Supabase is not configured yet, persist locally so user work is never lost
+    const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
+    const idx = local.findIndex(p => p.id === id);
+    if (idx >= 0) local[idx] = fullProject;
+    else local.push(fullProject);
+    setLocalData(STORAGE_KEYS.PROJECTS, local);
 
-    if (verifyError || !verifiedRecord) {
-      console.error('Supabase verification error:', verifyError);
-      throw new Error('Supabase verification failed: Project was saved, but could not be verified in the database.');
-    }
-
-    return verifiedRecord as Project;
+    return fullProject;
   },
 
   async deleteProject(id: string): Promise<void> {
     const supabase = getSupabaseClient();
-    if (!supabase) {
-      throw new Error('Supabase is not configured.');
+    if (supabase) {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) {
+        console.error('Supabase deleteProject error:', error);
+        throw new Error(`Supabase delete error: ${error.message}`);
+      }
     }
-
-    const { error } = await supabase.from('projects').delete().eq('id', id);
-    if (error) {
-      console.error('Supabase deleteProject error:', error);
-      throw new Error(`Supabase delete error: ${error.message}`);
-    }
+    const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
+    setLocalData(STORAGE_KEYS.PROJECTS, local.filter(p => p.id !== id));
   },
 
   // === SERVICES ===
@@ -650,13 +661,20 @@ export const db = {
   // === STORAGE / IMAGE UPLOAD ===
   async uploadImage(file: File, bucket = 'project-images'): Promise<string> {
     const supabase = getSupabaseClient();
-    if (!supabase) {
-      throw new Error('Supabase is not configured. Cannot upload image to Supabase Storage.');
-    }
 
     // Maximum file size check (15MB)
     if (file.size > 15 * 1024 * 1024) {
       throw new Error('File size exceeds the 15MB upload limit.');
+    }
+
+    if (!supabase) {
+      // Local fallback: convert file to Base64 data URL if Supabase is not connected
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to process image file.'));
+        reader.readAsDataURL(file);
+      });
     }
 
     const fileExt = file.name.split('.').pop() || 'jpg';
