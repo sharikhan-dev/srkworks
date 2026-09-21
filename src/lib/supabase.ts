@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const getStoredSupabaseConfig = () => {
   const envUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-  const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
 
   // If env variables are configured, they are the primary source of truth across all devices
   if (envUrl && envKey) {
