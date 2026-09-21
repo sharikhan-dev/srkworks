@@ -38,6 +38,14 @@ import {
 } from '../../types';
 import { db } from '../../services/db';
 import { isSupabaseConfigured } from '../../lib/supabase';
+import {
+  INITIAL_SITE_SETTINGS,
+  INITIAL_THEME_SETTINGS,
+  INITIAL_HERO_SETTINGS,
+  INITIAL_NAVBAR_SETTINGS,
+  INITIAL_ABOUT_SETTINGS,
+  INITIAL_SECTION_VISIBILITY
+} from '../../services/seedData';
 import { ProjectsManager } from './ProjectsManager';
 import { ServicesManager } from './ServicesManager';
 import { MessagesManager } from './MessagesManager';
@@ -87,19 +95,7 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
   const loadAllData = async () => {
     setIsLoading(true);
     try {
-      const [
-        projData,
-        servData,
-        setData,
-        msgData,
-        themeData,
-        heroData,
-        navData,
-        aboutData,
-        secData,
-        socData,
-        testData
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         db.getProjects(false),
         db.getServices(false),
         db.getSiteSettings(),
@@ -112,17 +108,32 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
         db.getSocialLinks(),
         db.getTestimonials(false)
       ]);
-      setProjects(projData);
-      setServices(servData);
-      setSettings(setData);
-      setMessages(msgData);
-      setTheme(themeData);
-      setHero(heroData);
-      setNavbar(navData);
-      setAbout(aboutData);
-      setSections(secData);
-      setSocials(socData);
-      setTestimonials(testData);
+
+      const [
+        projRes,
+        servRes,
+        setRes,
+        msgRes,
+        themeRes,
+        heroRes,
+        navRes,
+        aboutRes,
+        secRes,
+        socRes,
+        testRes
+      ] = results;
+
+      if (projRes.status === 'fulfilled') setProjects(projRes.value);
+      if (servRes.status === 'fulfilled') setServices(servRes.value);
+      if (setRes.status === 'fulfilled') setSettings(setRes.value);
+      if (msgRes.status === 'fulfilled') setMessages(msgRes.value);
+      if (themeRes.status === 'fulfilled') setTheme(themeRes.value);
+      if (heroRes.status === 'fulfilled') setHero(heroRes.value);
+      if (navRes.status === 'fulfilled') setNavbar(navRes.value);
+      if (aboutRes.status === 'fulfilled') setAbout(aboutRes.value);
+      if (secRes.status === 'fulfilled') setSections(secRes.value);
+      if (socRes.status === 'fulfilled') setSocials(socRes.value);
+      if (testRes.status === 'fulfilled') setTestimonials(testRes.value);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -458,33 +469,33 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
               )}
 
               {/* TAB 2: WEBSITE SETTINGS */}
-              {activeTab === 'settings' && settings && (
+              {activeTab === 'settings' && (
                 <SettingsManager
-                  settings={settings}
+                  settings={settings || INITIAL_SITE_SETTINGS}
                   onRefresh={loadAllData}
                 />
               )}
 
               {/* TAB 3: THEME & COLOR CUSTOMIZER */}
-              {activeTab === 'theme' && theme && (
+              {activeTab === 'theme' && (
                 <ThemeManager
-                  theme={theme}
+                  theme={theme || INITIAL_THEME_SETTINGS}
                   onRefresh={loadAllData}
                 />
               )}
 
               {/* TAB 4: HERO SECTION CMS */}
-              {activeTab === 'hero' && hero && (
+              {activeTab === 'hero' && (
                 <HeroManager
-                  hero={hero}
+                  hero={hero || INITIAL_HERO_SETTINGS}
                   onRefresh={loadAllData}
                 />
               )}
 
               {/* TAB 5: NAVBAR CMS */}
-              {activeTab === 'navbar' && navbar && (
+              {activeTab === 'navbar' && (
                 <NavbarManager
-                  navbar={navbar}
+                  navbar={navbar || INITIAL_NAVBAR_SETTINGS}
                   onRefresh={loadAllData}
                 />
               )}
@@ -514,9 +525,9 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
               )}
 
               {/* TAB 8: ABOUT CMS */}
-              {activeTab === 'about' && about && (
+              {activeTab === 'about' && (
                 <AboutManager
-                  about={about}
+                  about={about || INITIAL_ABOUT_SETTINGS}
                   onRefresh={loadAllData}
                 />
               )}
@@ -530,9 +541,9 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
               )}
 
               {/* TAB 10: SECTIONS VISIBILITY */}
-              {activeTab === 'sections' && sections && (
+              {activeTab === 'sections' && (
                 <SectionsManager
-                  visibility={sections}
+                  visibility={sections || INITIAL_SECTION_VISIBILITY}
                   onRefresh={loadAllData}
                 />
               )}
