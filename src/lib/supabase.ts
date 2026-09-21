@@ -24,11 +24,13 @@ const getStoredSupabaseConfig = () => {
     // ignore
   }
 
-  return {
-    url: '',
-    anonKey: '',
-    isCustom: false
-  };
+  // Production hardcoded fallback — ensures the live site always connects to
+  // Supabase even when VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY env vars are
+  // not configured on the deployment host (Vercel, Netlify, etc.).
+  // The anon/publishable key is intentionally public and safe to embed here.
+  const PROD_URL = 'https://oouftndgjvvdqaztvrpc.supabase.co';
+  const PROD_KEY = 'sb_publishable_GkRoH4tW7-CDf_PnsxhgyQ_c2OpjwYx';
+  return { url: PROD_URL, anonKey: PROD_KEY, isCustom: false };
 };
 
 let cachedClient: SupabaseClient | null = null;
