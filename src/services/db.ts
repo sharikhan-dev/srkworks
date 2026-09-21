@@ -321,10 +321,26 @@ export const db = {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      // 1. Upsert to Supabase
-      const { error: saveError } = await supabase
+      // 1. Upsert to Supabase with auto-healing schema adapter
+      let sendPayload: Record<string, any> = { ...fullProject };
+      let { error: saveError } = await supabase
         .from('projects')
-        .upsert([fullProject], { onConflict: 'id' });
+        .upsert([sendPayload], { onConflict: 'id' });
+
+      // Auto-heal if existing Supabase table lacks newer optional columns (e.g. PGRST204 for button_text)
+      while (saveError && saveError.code === 'PGRST204') {
+        const match = saveError.message.match(/Could not find the '([^']+)' column/i);
+        if (match && match[1] && sendPayload[match[1]] !== undefined) {
+          console.warn(`Supabase projects table lacks column '${match[1]}'. Auto-retrying without it...`);
+          delete sendPayload[match[1]];
+          const retry = await supabase
+            .from('projects')
+            .upsert([sendPayload], { onConflict: 'id' });
+          saveError = retry.error;
+        } else {
+          break;
+        }
+      }
 
       if (saveError) {
         console.error('Supabase saveProject error:', saveError);
@@ -352,14 +368,20 @@ export const db = {
         throw new Error('Supabase verification failed: Project was saved, but cannot be read back. Check Row Level Security (RLS) policies on your Supabase projects table.');
       }
 
+      // Merge verified database row with full client-side project data
+      const mergedSavedProject: Project = {
+        ...fullProject,
+        ...(verifiedRows[0] as Project)
+      };
+
       // Update local storage mirror
       const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
       const idx = local.findIndex(p => p.id === id);
-      if (idx >= 0) local[idx] = verifiedRows[0] as Project;
-      else local.push(verifiedRows[0] as Project);
+      if (idx >= 0) local[idx] = mergedSavedProject;
+      else local.push(mergedSavedProject);
       setLocalData(STORAGE_KEYS.PROJECTS, local);
 
-      return verifiedRows[0] as Project;
+      return mergedSavedProject;
     }
 
     // If Supabase is not configured yet, persist locally so user work is never lost
@@ -1031,6 +1053,22 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+-- Ensure all project columns exist even on pre-existing Supabase tables:
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS button_text TEXT DEFAULT 'View Case Study ↗';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS case_study_url TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS cover_image TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS short_description TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS video_url TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS technologies TEXT[] DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS client TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS metrics TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS challenge TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS solution TEXT;
 
 -- 3. SERVICES TABLE
 CREATE TABLE IF NOT EXISTS services (
