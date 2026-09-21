@@ -7,6 +7,12 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Grant schema permissions to public, anon, and authenticated roles:
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+
 -- =========================================================
 -- 1. SITE SETTINGS
 -- =========================================================
@@ -272,48 +278,32 @@ DROP POLICY IF EXISTS "Public can view about settings" ON about_settings;
 DROP POLICY IF EXISTS "Public can view section settings" ON section_settings;
 DROP POLICY IF EXISTS "Public can view social links" ON social_links;
 
--- Public read policies (Public website displays active content):
-CREATE POLICY "Public can view site settings" ON site_settings FOR SELECT USING (true);
-CREATE POLICY "Public can view projects" ON projects FOR SELECT USING (true);
-CREATE POLICY "Enable all operations on projects" ON projects FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public can view services" ON services FOR SELECT USING (true);
-CREATE POLICY "Public can view skills" ON skills FOR SELECT USING (true);
-CREATE POLICY "Public can view testimonials" ON testimonials FOR SELECT USING (true);
-CREATE POLICY "Public can view theme settings" ON theme_settings FOR SELECT USING (true);
-CREATE POLICY "Public can view hero settings" ON hero_settings FOR SELECT USING (true);
-CREATE POLICY "Public can view navbar settings" ON navbar_settings FOR SELECT USING (true);
-CREATE POLICY "Public can view about settings" ON about_settings FOR SELECT USING (true);
-CREATE POLICY "Public can view section settings" ON section_settings FOR SELECT USING (true);
-CREATE POLICY "Public can view social links" ON social_links FOR SELECT USING (true);
+-- Public full access policies (permits Admin CMS actions & live site reads):
+DROP POLICY IF EXISTS "Public full access site_settings" ON site_settings;
+DROP POLICY IF EXISTS "Public full access projects" ON projects;
+DROP POLICY IF EXISTS "Public full access services" ON services;
+DROP POLICY IF EXISTS "Public full access skills" ON skills;
+DROP POLICY IF EXISTS "Public full access testimonials" ON testimonials;
+DROP POLICY IF EXISTS "Public full access contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Public full access theme_settings" ON theme_settings;
+DROP POLICY IF EXISTS "Public full access hero_settings" ON hero_settings;
+DROP POLICY IF EXISTS "Public full access navbar_settings" ON navbar_settings;
+DROP POLICY IF EXISTS "Public full access about_settings" ON about_settings;
+DROP POLICY IF EXISTS "Public full access section_settings" ON section_settings;
+DROP POLICY IF EXISTS "Public full access social_links" ON social_links;
 
--- Contact messages insertion policy:
-DROP POLICY IF EXISTS "Anyone can submit a contact message" ON contact_messages;
-CREATE POLICY "Anyone can submit a contact message" ON contact_messages FOR INSERT WITH CHECK (true);
-
--- Admin management policies:
-DROP POLICY IF EXISTS "Admin full access site_settings" ON site_settings;
-DROP POLICY IF EXISTS "Admin full access services" ON services;
-DROP POLICY IF EXISTS "Admin full access skills" ON skills;
-DROP POLICY IF EXISTS "Admin full access testimonials" ON testimonials;
-DROP POLICY IF EXISTS "Admin full access contact_messages" ON contact_messages;
-DROP POLICY IF EXISTS "Admin full access theme_settings" ON theme_settings;
-DROP POLICY IF EXISTS "Admin full access hero_settings" ON hero_settings;
-DROP POLICY IF EXISTS "Admin full access navbar_settings" ON navbar_settings;
-DROP POLICY IF EXISTS "Admin full access about_settings" ON about_settings;
-DROP POLICY IF EXISTS "Admin full access section_settings" ON section_settings;
-DROP POLICY IF EXISTS "Admin full access social_links" ON social_links;
-
-CREATE POLICY "Admin full access site_settings" ON site_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access services" ON services FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access skills" ON skills FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access testimonials" ON testimonials FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access contact_messages" ON contact_messages FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access theme_settings" ON theme_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access hero_settings" ON hero_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access navbar_settings" ON navbar_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access about_settings" ON about_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access section_settings" ON section_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access social_links" ON social_links FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access site_settings" ON site_settings FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access projects" ON projects FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access services" ON services FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access skills" ON skills FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access testimonials" ON testimonials FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access contact_messages" ON contact_messages FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access theme_settings" ON theme_settings FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access hero_settings" ON hero_settings FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access navbar_settings" ON navbar_settings FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access about_settings" ON about_settings FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access section_settings" ON section_settings FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access social_links" ON social_links FOR ALL TO public USING (true) WITH CHECK (true);
 
 -- =========================================================
 -- STORAGE BUCKETS SETUP & POLICIES
