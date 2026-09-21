@@ -68,7 +68,8 @@ export default function App() {
         projData,
         servData,
         skData,
-        testData
+        testData,
+        expData
       ] = await Promise.all([
         db.getSiteSettings(),
         db.getThemeSettings(),
@@ -80,7 +81,8 @@ export default function App() {
         db.getProjects(true), // public only
         db.getServices(true), // active only
         db.getSkills(),
-        db.getTestimonials(true)
+        db.getTestimonials(true),
+        db.getExperience()
       ]);
 
       setSettings(setData);
@@ -94,6 +96,7 @@ export default function App() {
       setServices(servData);
       setSkills(skData);
       setTestimonials(testData);
+      setExperience(expData);
 
       // Check current auth status
       const auth = db.getAuthSession();
@@ -339,28 +342,7 @@ export default function App() {
             settings={settings}
             about={about}
             skills={skills}
-            experience={[
-              {
-                id: 'exp-1',
-                title: 'Principal Digital Product Designer & AI Engineer',
-                role: 'Lead Creator',
-                company: 'SHARIK',
-                period: '2023 — Present',
-                description: 'Designing and deploying production web applications and autonomous AI systems.',
-                technologies: ['React', 'TypeScript', 'Figma', 'Supabase', 'Gemini API'],
-                display_order: 1
-              },
-              {
-                id: 'exp-2',
-                title: 'Senior Product Designer & UI Engineer',
-                role: 'Senior Designer',
-                company: 'Vanguard Interactive',
-                period: '2021 — 2023',
-                description: 'Spearheaded design system unification across 4 web platforms.',
-                technologies: ['Design Systems', 'React', 'Tailwind CSS', 'Storybook'],
-                display_order: 2
-              }
-            ]}
+            experience={experience}
             onNavigate={handleNavigate}
           />
         )}

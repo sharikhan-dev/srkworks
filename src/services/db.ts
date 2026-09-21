@@ -68,11 +68,10 @@ const SEED_FINGERPRINT_KEY = 'aura_seed_fingerprint_v2';
 
 function computeSeedFingerprint(): string {
   try {
-    const pStr = INITIAL_PROJECTS.map(p => `${p.id}:${p.title || p.name}:${p.category}:${p.year}:${p.cover_image || p.image_url}:${p.case_study_url || p.live_url}:${p.short_description || p.description}`).join('|');
     const sStr = `${INITIAL_SITE_SETTINGS.name}:${INITIAL_SITE_SETTINGS.headline}:${INITIAL_SITE_SETTINGS.seo_title}:${INITIAL_SITE_SETTINGS.profile_image}:${INITIAL_SITE_SETTINGS.email}`;
     const nStr = `${INITIAL_NAVBAR_SETTINGS.brand_name}:${INITIAL_NAVBAR_SETTINGS.logo_initial}`;
     const hStr = `${INITIAL_HERO_SETTINGS.eyebrow}:${INITIAL_HERO_SETTINGS.headline}:${INITIAL_HERO_SETTINGS.hero_image}`;
-    return `${pStr}##${sStr}##${nStr}##${hStr}`;
+    return `##${sStr}##${nStr}##${hStr}`;
   } catch {
     return 'default_fingerprint';
   }
@@ -80,23 +79,19 @@ function computeSeedFingerprint(): string {
 
 /**
  * Synchronizes localStorage with file data (seedData.ts).
- * If the developer edits seedData.ts in the code, the change is automatically detected
- * via fingerprint and updated in localStorage, while preserving custom items added in Admin.
+ * Note: Projects are excluded because Supabase is the sole source of truth for project data.
  */
 export function syncWithSeedData(force = false) {
   const currentFingerprint = computeSeedFingerprint();
   const savedFingerprint = localStorage.getItem(SEED_FINGERPRINT_KEY);
 
   if (force || !savedFingerprint || savedFingerprint !== currentFingerprint) {
-    // 1. PROJECTS: Update existing seed projects with latest code changes, keep any user-created items
-    const existingProjects = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, []);
-    const seedIds = new Set(INITIAL_PROJECTS.map(p => p.id));
-    const userCustomProjects = existingProjects.filter(p => !seedIds.has(p.id));
-
-    // When updating from code file:
-    // Update seed projects to reflect the code file, preserving any custom user projects created via Admin
-    const mergedProjects = [...INITIAL_PROJECTS, ...userCustomProjects];
-    setLocalData(STORAGE_KEYS.PROJECTS, mergedProjects);
+    // 1. Clean up legacy local project cache to prevent stale dummy data
+    try {
+      localStorage.removeItem(STORAGE_KEYS.PROJECTS);
+    } catch {
+      // ignore
+    }
 
     // 2. SETTINGS: If force or first time, load seed settings; if file changed, merge seed updates
     if (force || !savedFingerprint) {
@@ -135,33 +130,20 @@ export function syncWithSeedData(force = false) {
   }
 }
 
-// Ensure seed data is initialized and kept in sync with code file
+// Ensure local persistence is initialized without dummy projects or sample messages
 export function initializeLocalStorageIfNeeded() {
   syncWithSeedData(false);
 
+  // Clean out any lingering local projects cache
+  try {
+    localStorage.removeItem(STORAGE_KEYS.PROJECTS);
+  } catch {
+    // ignore
+  }
+
+  // Initialize messages as empty array (no dummy messages)
   if (!localStorage.getItem(STORAGE_KEYS.MESSAGES)) {
-    setLocalData(STORAGE_KEYS.MESSAGES, [
-      {
-        id: 'msg-sample-1',
-        name: 'Sarah Lin',
-        email: 'sarah.lin@vertexai.io',
-        project_type: 'AI Chatbot & Automation',
-        budget: '₹40,000 - ₹80,000',
-        message: 'Looking to integrate a domain-specific conversational agent for our SaaS onboarding. Love your minimal product aesthetic.',
-        status: 'new',
-        created_at: new Date(Date.now() - 3600000 * 12).toISOString()
-      },
-      {
-        id: 'msg-sample-2',
-        name: 'David Thorne',
-        email: 'dthorne@apexcapital.vc',
-        project_type: 'Full Website Redesign',
-        budget: '₹1,00,000+',
-        message: 'We want to rebuild our venture fund digital portal with Apple-level typography and custom motion. Available next month?',
-        status: 'contacted',
-        created_at: new Date(Date.now() - 3600000 * 48).toISOString()
-      }
-    ]);
+    setLocalData(STORAGE_KEYS.MESSAGES, []);
   }
 }
 
@@ -172,8 +154,10 @@ export function initializeLocalStorageIfNeeded() {
 export const db = {
   // === SYNC & RESET WITH CODE FILE (seedData.ts) ===
   resetToSeedData(entity?: 'all' | 'projects' | 'settings'): void {
-    if (!entity || entity === 'all' || entity === 'projects') {
-      setLocalData(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
+    if (entity === 'projects') {
+      // Supabase is the sole source of truth; clear local cache
+      localStorage.removeItem(STORAGE_KEYS.PROJECTS);
+      return;
     }
     if (!entity || entity === 'all' || entity === 'settings') {
       setLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
@@ -264,43 +248,57 @@ export const db = {
 
   // === PROJECTS ===
   async getProjects(publicOnly = true): Promise<Project[]> {
-    const local = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        let query = supabase.from('projects').select('*').order('display_order', { ascending: true });
+        let query = supabase
+          .from('projects')
+          .select('*')
+          .order('display_order', { ascending: true });
+
         if (publicOnly) {
           query = query.eq('published', true);
         }
+
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          // Merge Supabase data with any newer local edits to avoid overwriting recent changes
-          const map = new Map<string, Project>();
-          data.forEach(p => map.set(p.id, p));
-          local.forEach(lp => {
-            const sp = map.get(lp.id);
-            if (!sp || (lp.updated_at && sp.updated_at && new Date(lp.updated_at) > new Date(sp.updated_at))) {
-              map.set(lp.id, lp);
-            }
-          });
-          const merged = Array.from(map.values()).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-          setLocalData(STORAGE_KEYS.PROJECTS, merged);
-          return publicOnly ? merged.filter(p => p.published) : merged;
+        if (error) {
+          console.error('Supabase getProjects error:', error);
+          throw new Error(`Failed to load projects from Supabase: ${error.message}`);
         }
+
+        return data || [];
       } catch (err) {
-        console.warn('Supabase getProjects error, falling back:', err);
+        console.error('Failed to fetch projects from Supabase:', err);
+        throw err;
       }
     }
-    const sorted = [...local].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-    return publicOnly ? sorted.filter(p => p.published) : sorted;
+
+    // If Supabase is not configured, return empty array (do NOT fallback to dummy projects)
+    console.warn('Supabase client is not configured. Projects table cannot be loaded.');
+    return [];
   },
 
   async saveProject(project: Partial<Project> & { name: string }): Promise<Project> {
-    const all = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
-    const id = project.id || `proj-${Date.now()}`;
-    const image = project.image_url || project.cover_image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase is not configured. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+    }
+
     const title = (project.title || project.name || '').trim();
-    const slug = project.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    if (!title) {
+      throw new Error('Project title is required.');
+    }
+
+    const id = project.id || `proj-${Date.now()}`;
+    const image = (project.image_url || project.cover_image || '').trim();
+    const slug = (
+      project.slug ||
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') ||
+      `proj-${Date.now()}`
+    );
     const desc = (project.description || project.short_description || '').trim();
     const caseStudyUrl = (project.case_study_url || project.live_url || '').trim();
 
@@ -314,16 +312,19 @@ export const db = {
       category: project.category || 'UI/UX Design',
       cover_image: image,
       image_url: image,
-      images: project.images && project.images.length > 0 ? project.images : [image],
+      images: project.images && project.images.length > 0 ? project.images : (image ? [image] : []),
       video_url: project.video_url || '',
-      technologies: project.technologies && project.technologies.length > 0 ? project.technologies : ['Design', 'Development'],
+      technologies:
+        project.technologies && project.technologies.length > 0
+          ? project.technologies
+          : ['Design', 'Development'],
       project_type: project.project_type || project.category || 'Case Study',
       year: (project.year || String(new Date().getFullYear())).trim(),
       featured: Boolean(project.featured),
       live_url: caseStudyUrl,
       case_study_url: caseStudyUrl,
       button_text: project.button_text?.trim() || 'View Case Study ↗',
-      display_order: project.display_order ?? (all.length + 1),
+      display_order: project.display_order ?? 0,
       published: project.published !== undefined ? project.published : true,
       client: project.client || '',
       metrics: project.metrics || '',
@@ -333,37 +334,44 @@ export const db = {
       updated_at: new Date().toISOString()
     };
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        const { error } = await supabase.from('projects').upsert([fullProject]);
-        if (error) console.warn('Supabase saveProject error:', error.message);
-      } catch (err) {
-        console.warn('Supabase saveProject error:', err);
-      }
+    // 1. Upsert to Supabase
+    const { data: savedData, error: saveError } = await supabase
+      .from('projects')
+      .upsert([fullProject], { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Supabase saveProject error:', saveError);
+      throw new Error(`Supabase save error (${saveError.code || 'DB_ERROR'}): ${saveError.message}`);
     }
 
-    const index = all.findIndex(p => p.id === id);
-    if (index >= 0) {
-      all[index] = fullProject;
-    } else {
-      all.push(fullProject);
+    // 2. Strict Verification: Query the record back from Supabase to confirm persistence
+    const { data: verifiedRecord, error: verifyError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (verifyError || !verifiedRecord) {
+      console.error('Supabase verification error:', verifyError);
+      throw new Error('Supabase verification failed: Project was saved, but could not be verified in the database.');
     }
-    setLocalData(STORAGE_KEYS.PROJECTS, all);
-    return fullProject;
+
+    return verifiedRecord as Project;
   },
 
   async deleteProject(id: string): Promise<void> {
     const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        await supabase.from('projects').delete().eq('id', id);
-      } catch (err) {
-        console.warn('Supabase deleteProject error:', err);
-      }
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
     }
-    const all = getLocalData<Project[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
-    setLocalData(STORAGE_KEYS.PROJECTS, all.filter(p => p.id !== id));
+
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+    if (error) {
+      console.error('Supabase deleteProject error:', error);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
   },
 
   // === SERVICES ===
@@ -491,6 +499,21 @@ export const db = {
     }
     const all = getLocalData<Skill[]>(STORAGE_KEYS.SKILLS, INITIAL_SKILLS);
     setLocalData(STORAGE_KEYS.SKILLS, all.filter(s => s.id !== id));
+  },
+
+  // === EXPERIENCE ===
+  async getExperience(): Promise<Experience[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('experience').select('*').order('display_order', { ascending: true });
+        if (!error && data && data.length > 0) return data;
+      } catch (err) {
+        // ignore
+      }
+    }
+    const all = getLocalData<Experience[]>(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
+    return [...all].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   },
 
   // === TESTIMONIALS ===
@@ -627,73 +650,41 @@ export const db = {
   // === STORAGE / IMAGE UPLOAD ===
   async uploadImage(file: File, bucket = 'project-images'): Promise<string> {
     const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-        const filePath = `${fileName}`;
-        const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file);
-        if (!uploadError) {
-          const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
-          if (data?.publicUrl) return data.publicUrl;
-        }
-      } catch (err) {
-        console.warn('Supabase storage upload error, creating compressed local URL:', err);
-      }
+    if (!supabase) {
+      throw new Error('Supabase is not configured. Cannot upload image to Supabase Storage.');
     }
 
-    // Fallback: Read file with client-side compression to avoid exceeding localStorage quota
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = reject;
-      reader.onload = () => {
-        const rawUrl = reader.result as string;
-        // If not browser canvas available or svg, return raw
-        if (typeof document === 'undefined' || file.type.includes('svg')) {
-          resolve(rawUrl);
-          return;
-        }
+    // Maximum file size check (15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      throw new Error('File size exceeds the 15MB upload limit.');
+    }
 
-        const img = new Image();
-        img.onerror = () => resolve(rawUrl);
-        img.onload = () => {
-          try {
-            const maxDimension = 1280;
-            let { width, height } = img;
-            if (width > maxDimension || height > maxDimension) {
-              if (width > height) {
-                height = Math.round((height * maxDimension) / width);
-                width = maxDimension;
-              } else {
-                width = Math.round((width * maxDimension) / height);
-                height = maxDimension;
-              }
-            }
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const fileName = `proj-${timestamp}-${randomStr}.${fileExt}`;
+    const filePath = fileName;
 
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              resolve(rawUrl);
-              return;
-            }
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, width, height);
+    if (uploadError) {
+      console.error('Supabase Storage upload error:', uploadError);
+      throw new Error(`Storage upload failed (${uploadError.name || 'UPLOAD_ERROR'}): ${uploadError.message}`);
+    }
 
-            // Compress to JPEG 0.82 for high visual quality at ~100KB-150KB
-            const compressed = canvas.toDataURL('image/jpeg', 0.82);
-            resolve(compressed);
-          } catch {
-            resolve(rawUrl);
-          }
-        };
-        img.src = rawUrl;
-      };
-      reader.readAsDataURL(file);
-    });
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    if (!data?.publicUrl) {
+      throw new Error('Failed to retrieve public URL from Supabase Storage.');
+    }
+
+    // Add cache-busting timestamp query parameter so browsers never cache an outdated image
+    const publicUrlWithBuster = `${data.publicUrl}?t=${timestamp}`;
+    return publicUrlWithBuster;
   },
 
   // === AUTHENTICATION ===
@@ -1180,53 +1171,95 @@ ALTER TABLE about_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE section_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE social_links ENABLE ROW LEVEL SECURITY;
 
--- Public read policies:
-CREATE POLICY "Public users can view site settings" ON site_settings FOR SELECT USING (true);
-CREATE POLICY "Public users can view published projects" ON projects FOR SELECT USING (published = true);
-CREATE POLICY "Public users can view active services" ON services FOR SELECT USING (enabled = true);
-CREATE POLICY "Public users can view enabled skills" ON skills FOR SELECT USING (enabled = true);
-CREATE POLICY "Public users can view published testimonials" ON testimonials FOR SELECT USING (published = true);
-CREATE POLICY "Public users can view theme settings" ON theme_settings FOR SELECT USING (true);
-CREATE POLICY "Public users can view hero settings" ON hero_settings FOR SELECT USING (true);
-CREATE POLICY "Public users can view navbar settings" ON navbar_settings FOR SELECT USING (true);
-CREATE POLICY "Public users can view about settings" ON about_settings FOR SELECT USING (true);
-CREATE POLICY "Public users can view section settings" ON section_settings FOR SELECT USING (true);
-CREATE POLICY "Public users can view social links" ON social_links FOR SELECT USING (enabled = true);
+-- Clean existing policies for idempotency
+DROP POLICY IF EXISTS "Public can view site settings" ON site_settings;
+DROP POLICY IF EXISTS "Public can view projects" ON projects;
+DROP POLICY IF EXISTS "Enable all operations on projects" ON projects;
+DROP POLICY IF EXISTS "Public can view services" ON services;
+DROP POLICY IF EXISTS "Public can view skills" ON skills;
+DROP POLICY IF EXISTS "Public can view testimonials" ON testimonials;
+DROP POLICY IF EXISTS "Public can view theme settings" ON theme_settings;
+DROP POLICY IF EXISTS "Public can view hero settings" ON hero_settings;
+DROP POLICY IF EXISTS "Public can view navbar settings" ON navbar_settings;
+DROP POLICY IF EXISTS "Public can view about settings" ON about_settings;
+DROP POLICY IF EXISTS "Public can view section settings" ON section_settings;
+DROP POLICY IF EXISTS "Public can view social links" ON social_links;
 
--- Public insert policy for contact messages:
+-- Public read policies (Public website displays active content):
+CREATE POLICY "Public can view site settings" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "Public can view projects" ON projects FOR SELECT USING (true);
+CREATE POLICY "Enable all operations on projects" ON projects FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public can view services" ON services FOR SELECT USING (true);
+CREATE POLICY "Public can view skills" ON skills FOR SELECT USING (true);
+CREATE POLICY "Public can view testimonials" ON testimonials FOR SELECT USING (true);
+CREATE POLICY "Public can view theme settings" ON theme_settings FOR SELECT USING (true);
+CREATE POLICY "Public can view hero settings" ON hero_settings FOR SELECT USING (true);
+CREATE POLICY "Public can view navbar settings" ON navbar_settings FOR SELECT USING (true);
+CREATE POLICY "Public can view about settings" ON about_settings FOR SELECT USING (true);
+CREATE POLICY "Public can view section settings" ON section_settings FOR SELECT USING (true);
+CREATE POLICY "Public can view social links" ON social_links FOR SELECT USING (true);
+
+-- Contact messages insertion policy:
+DROP POLICY IF EXISTS "Anyone can submit a contact message" ON contact_messages;
 CREATE POLICY "Anyone can submit a contact message" ON contact_messages FOR INSERT WITH CHECK (true);
 
--- Authenticated admin full access:
-CREATE POLICY "Admin full access site_settings" ON site_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access projects" ON projects FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access services" ON services FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access skills" ON skills FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access testimonials" ON testimonials FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access contact_messages" ON contact_messages FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access theme_settings" ON theme_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access hero_settings" ON hero_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access navbar_settings" ON navbar_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access about_settings" ON about_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access section_settings" ON section_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin full access social_links" ON social_links FOR ALL TO authenticated USING (true);
+-- Admin management policies:
+DROP POLICY IF EXISTS "Admin full access site_settings" ON site_settings;
+DROP POLICY IF EXISTS "Admin full access services" ON services;
+DROP POLICY IF EXISTS "Admin full access skills" ON skills;
+DROP POLICY IF EXISTS "Admin full access testimonials" ON testimonials;
+DROP POLICY IF EXISTS "Admin full access contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Admin full access theme_settings" ON theme_settings;
+DROP POLICY IF EXISTS "Admin full access hero_settings" ON hero_settings;
+DROP POLICY IF EXISTS "Admin full access navbar_settings" ON navbar_settings;
+DROP POLICY IF EXISTS "Admin full access about_settings" ON about_settings;
+DROP POLICY IF EXISTS "Admin full access section_settings" ON section_settings;
+DROP POLICY IF EXISTS "Admin full access social_links" ON social_links;
+
+CREATE POLICY "Admin full access site_settings" ON site_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access services" ON services FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access skills" ON skills FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access testimonials" ON testimonials FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access contact_messages" ON contact_messages FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access theme_settings" ON theme_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access hero_settings" ON hero_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access navbar_settings" ON navbar_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access about_settings" ON about_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access section_settings" ON section_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access social_links" ON social_links FOR ALL USING (true) WITH CHECK (true);
 
 -- =========================================================
--- STORAGE BUCKETS SETUP
+-- STORAGE BUCKETS SETUP & POLICIES
 -- =========================================================
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('project-images', 'project-images', true)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET public = true;
 
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('profile-images', 'profile-images', true)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET public = true;
 
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('service-assets', 'service-assets', true)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET public = true;
 
-CREATE POLICY "Public storage read" ON storage.objects FOR SELECT USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
-CREATE POLICY "Admin storage upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+DROP POLICY IF EXISTS "Public storage read" ON storage.objects;
+DROP POLICY IF EXISTS "Allow storage upload" ON storage.objects;
+DROP POLICY IF EXISTS "Allow storage update" ON storage.objects;
+DROP POLICY IF EXISTS "Allow storage delete" ON storage.objects;
+
+CREATE POLICY "Public storage read" ON storage.objects
+  FOR SELECT USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+
+CREATE POLICY "Allow storage upload" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+
+CREATE POLICY "Allow storage update" ON storage.objects
+  FOR UPDATE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'))
+  WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+
+CREATE POLICY "Allow storage delete" ON storage.objects
+  FOR DELETE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
 `;
   }
 };

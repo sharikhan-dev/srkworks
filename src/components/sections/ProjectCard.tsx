@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ArrowUpRight, FolderGit2 } from 'lucide-react';
 import { Project } from '../../types';
@@ -16,6 +16,11 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
   const title = project.title || project.name;
   const description = project.short_description || project.description || '';
   const imageUrl = project.cover_image || project.image_url;
+
+  // Reset image error state whenever imageUrl changes (e.g. after upload/update)
+  useEffect(() => {
+    setImgError(false);
+  }, [imageUrl]);
   const caseStudyUrl = project.case_study_url || project.live_url;
   const buttonText = project.button_text?.trim() || 'View Case Study ↗';
   const category = project.category || 'Portfolio';

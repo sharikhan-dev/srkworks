@@ -115,7 +115,10 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProject?.name?.trim()) return;
+    if (!editingProject?.name?.trim()) {
+      showFeedback('Project title/name is required.', 'error');
+      return;
+    }
 
     // Validate and auto-normalize URL
     const { url: targetUrl, error: urlValidationError } = normalizeAndValidateUrl(
@@ -123,6 +126,7 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
     );
     if (urlValidationError) {
       setUrlError(urlValidationError);
+      showFeedback(urlValidationError, 'error');
       return;
     }
     setUrlError('');
@@ -151,28 +155,14 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
 
       await db.saveProject(payload);
       setEditingProject(null);
-      showFeedback(`Project "${payload.title}" saved successfully!`);
-      onRefresh();
-    } catch (err) {
-      console.error('Error saving project:', err);
-      showFeedback('Failed to save project. Please check values.', 'error');
+      showFeedback(`Project "${payload.title}" saved and verified in Supabase!`, 'success');
+      await onRefresh();
+    } catch (err: any) {
+      console.error('Error saving project to Supabase:', err);
+      showFeedback(err?.message || 'Failed to save project. Please verify Supabase connection.', 'error');
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleSyncWithSeedData = () => {
-    if (window.confirm('Reload projects from src/services/seedData.ts? This will update projects to match your code file.')) {
-      db.resetToSeedData('projects');
-      onRefresh();
-      showFeedback('Successfully reloaded projects from seedData.ts code file!');
-    }
-  };
-
-  const handleCopyCode = () => {
-    const code = `export const INITIAL_PROJECTS: Project[] = ${JSON.stringify(projects, null, 2)};`;
-    navigator.clipboard.writeText(code);
-    showFeedback('Copied INITIAL_PROJECTS code to clipboard! You can paste it into seedData.ts.');
   };
 
   const handleConfirmDelete = async () => {
@@ -180,9 +170,11 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
     try {
       await db.deleteProject(projectToDelete.id);
       setProjectToDelete(null);
-      onRefresh();
-    } catch (err) {
+      showFeedback(`Project deleted successfully from Supabase!`, 'success');
+      await onRefresh();
+    } catch (err: any) {
       console.error('Error deleting project:', err);
+      showFeedback(err?.message || 'Failed to delete project from Supabase.', 'error');
     }
   };
 
@@ -202,9 +194,10 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
             }
           : null
       );
-    } catch (err) {
+      showFeedback('Image uploaded directly to Supabase Storage!', 'success');
+    } catch (err: any) {
       console.error('Upload failed:', err);
-      alert('Upload failed. You can also paste an image URL directly.');
+      showFeedback(err?.message || 'Upload failed. Check Supabase Storage permissions.', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -217,29 +210,19 @@ export function ProjectsManager({ projects, onRefresh }: ProjectsManagerProps) {
         <div>
           <h2 className="text-xl font-bold text-white">Project Showcase</h2>
           <p className="text-xs text-neutral-400 mt-0.5">
-            Add and manage portfolio projects linked to your external case studies (Behance, Dribbble, GitHub, Figma, live sites).
+            Manage portfolio projects stored in Supabase. Supabase is the sole source of truth across all devices.
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={handleSyncWithSeedData}
+            onClick={onRefresh}
             type="button"
             className="px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-300 glass-pill hover:text-white border border-white/10 hover:border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
-            title="Reload projects directly from src/services/seedData.ts code file"
+            title="Refresh live projects directly from Supabase"
           >
             <RefreshCw className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Sync with seedData.ts</span>
-          </button>
-
-          <button
-            onClick={handleCopyCode}
-            type="button"
-            className="px-3.5 py-2 rounded-xl text-xs font-medium text-neutral-300 glass-pill hover:text-white border border-white/10 hover:border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
-            title="Copy current projects as TypeScript code ready to paste into seedData.ts"
-          >
-            <Code className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Copy as Code</span>
+            <span>Refresh Supabase</span>
           </button>
 
           <button

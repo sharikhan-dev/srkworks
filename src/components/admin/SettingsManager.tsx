@@ -17,7 +17,8 @@ import { SiteSettings } from '../../types';
 import { db } from '../../services/db';
 import {
   saveCustomSupabaseConfig,
-  getSupabaseConnectionInfo
+  getSupabaseConnectionInfo,
+  testSupabaseConnection
 } from '../../lib/supabase';
 
 interface SettingsManagerProps {
@@ -39,8 +40,20 @@ export function SettingsManager({ settings, onRefresh }: SettingsManagerProps) {
 
   // Supabase Custom Config State
   const connInfo = getSupabaseConnectionInfo();
-  const [supabaseUrl, setSupabaseUrl] = useState('');
-  const [supabaseAnonKey, setSupabaseAnonKey] = useState('');
+  const [supabaseUrl, setSupabaseUrl] = useState(() => {
+    try {
+      return localStorage.getItem('aura_custom_supabase_url') || import.meta.env.VITE_SUPABASE_URL || '';
+    } catch {
+      return import.meta.env.VITE_SUPABASE_URL || '';
+    }
+  });
+  const [supabaseAnonKey, setSupabaseAnonKey] = useState(() => {
+    try {
+      return localStorage.getItem('aura_custom_supabase_anon_key') || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    } catch {
+      return import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    }
+  });
   const [isConnecting, setIsConnecting] = useState(false);
   const [supabaseStatusMsg, setSupabaseStatusMsg] = useState('');
 
@@ -104,16 +117,17 @@ export function SettingsManager({ settings, onRefresh }: SettingsManagerProps) {
     setTimeout(() => setCopiedSql(false), 2500);
   };
 
-  const handleConnectSupabase = (e: React.FormEvent) => {
+  const handleConnectSupabase = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsConnecting(true);
+    setSupabaseStatusMsg('Connecting and verifying Supabase access...');
     try {
       saveCustomSupabaseConfig(supabaseUrl, supabaseAnonKey);
-      setSupabaseStatusMsg('Configuration saved! Active connection updated.');
-      setTimeout(() => setSupabaseStatusMsg(''), 4000);
+      const testResult = await testSupabaseConnection();
+      setSupabaseStatusMsg(testResult.message);
       onRefresh();
-    } catch (err) {
-      setSupabaseStatusMsg('Error saving configuration.');
+    } catch (err: any) {
+      setSupabaseStatusMsg(`Connection failed: ${err?.message || err}`);
     } finally {
       setIsConnecting(false);
     }
