@@ -13,17 +13,10 @@ export function Footer({ settings, socials, onNavigate, onOpenAdmin }: FooterPro
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const defaultSocialLinks = [
-    { label: 'Instagram', url: 'https://instagram.com' },
-    { label: 'LinkedIn', url: 'https://linkedin.com' },
-    { label: 'GitHub', url: 'https://github.com' },
-    { label: 'Behance', url: 'https://behance.net' }
-  ];
-
   const activeSocials =
     socials && socials.length > 0
       ? socials.filter((s) => s.enabled)
-      : defaultSocialLinks;
+      : [];
 
   const brandName = settings.name || 'SHARIK KHAN';
   const logoInitial = settings.logo_initial || 'S';

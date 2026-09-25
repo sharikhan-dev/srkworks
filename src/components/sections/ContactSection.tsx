@@ -98,43 +98,47 @@ export function ContactSection({ settings }: ContactSectionProps) {
             </p>
 
             {/* Direct Channels */}
-            <div className="space-y-3 mb-8 sm:mb-10">
-              <a
-                href={`mailto:${settings.email || 'hello@sharikworks.com'}`}
-                className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
-                    <Mail className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] sm:text-xs text-neutral-400 block font-mono">Direct Email</span>
-                    <span className="text-xs sm:text-sm font-semibold text-white break-all">{settings.email || 'hello@sharikworks.com'}</span>
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
+            {(settings.email || settings.whatsapp) && (
+              <div className="space-y-3 mb-8 sm:mb-10">
+                {settings.email && (
+                  <a
+                    href={`mailto:${settings.email}`}
+                    className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] sm:text-xs text-neutral-400 block font-mono">Direct Email</span>
+                        <span className="text-xs sm:text-sm font-semibold text-white break-all">{settings.email}</span>
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </a>
+                )}
 
-              {settings.whatsapp && (
-                <a
-                  href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
-                      <MessageSquare className="w-4 h-4" />
+                {settings.whatsapp && (
+                  <a
+                    href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover border border-white/10 group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl glass-pill flex items-center justify-center text-neutral-300 group-hover:text-white">
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] sm:text-xs text-neutral-400 block font-mono">Instant Chat</span>
+                        <span className="text-xs sm:text-sm font-semibold text-white">{settings.whatsapp}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[10px] sm:text-xs text-neutral-400 block font-mono">Instant Chat</span>
-                      <span className="text-xs sm:text-sm font-semibold text-white">{settings.whatsapp}</span>
-                    </div>
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </a>
-              )}
-            </div>
+                    <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -31,11 +31,11 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   secondary_cta_label: "Let's Work Together",
   contact_headline: "LET'S BUILD SOMETHING\nUSEFUL.",
   contact_subtext: "Have an idea, product or business that needs a better digital experience?",
-  email: "hello@sharikworks.com",
-  whatsapp: "+1 (555) 234-8900",
-  linkedin: "https://linkedin.com",
-  github: "https://github.com",
-  twitter: "https://x.com",
+  email: "",
+  whatsapp: "",
+  linkedin: "",
+  github: "",
+  twitter: "",
   seo_title: "SHARIK — UI/UX Design, Web Development & AI Automation",
   seo_description: "Designing digital experiences, building modern websites, and creating AI-powered systems for the next generation of businesses.",
   og_image: "/hero-sculpture.jpg",
@@ -52,14 +52,8 @@ export const INITIAL_EXPERIENCE: Experience[] = [];
 
 export const INITIAL_TESTIMONIALS: Testimonial[] = [];
 
-export const INITIAL_SOCIAL_LINKS: SocialLink[] = [
-  { id: "soc-insta", platform: "Instagram", label: "Instagram", url: "https://instagram.com", enabled: true, display_order: 1 },
-  { id: "soc-linkedin", platform: "LinkedIn", label: "LinkedIn", url: "https://linkedin.com", enabled: true, display_order: 2 },
-  { id: "soc-github", platform: "GitHub", label: "GitHub", url: "https://github.com", enabled: true, display_order: 3 },
-  { id: "soc-behance", platform: "Behance", label: "Behance", url: "https://behance.net", enabled: true, display_order: 4 },
-  { id: "soc-x", platform: "X", label: "X (Twitter)", url: "https://x.com", enabled: true, display_order: 5 },
-  { id: "soc-email", platform: "Email", label: "Email", url: "mailto:hello@sharikworks.com", enabled: true, display_order: 6 }
-];
+export const INITIAL_SOCIAL_LINKS: SocialLink[] = [];
+
 
 export const THEME_PRESETS: Record<string, ThemeSettings> = {
   default: {
