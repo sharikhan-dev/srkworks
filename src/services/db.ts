@@ -412,11 +412,21 @@ export const db = {
     if (supabase) {
       try {
         let query = supabase.from('services').select('*').order('display_order', { ascending: true });
-        if (publicOnly) {
-          query = query.eq('enabled', true);
-        }
+        if (publicOnly) query = query.eq('enabled', true);
         const { data, error } = await query;
-        if (!error && data && data.length > 0) return data;
+        if (error) throw error;
+        // If Supabase is connected but table is empty, auto-seed from defaults so ALL browsers get the same data
+        if (data && data.length === 0 && !publicOnly) {
+          try {
+            await supabase.from('services').insert(INITIAL_SERVICES);
+          } catch { /* ignore if already exists */ }
+          return INITIAL_SERVICES.filter(s => publicOnly ? s.enabled : true);
+        }
+        if (data) {
+          // Cache locally and return — Supabase is the source of truth
+          setLocalData(STORAGE_KEYS.SERVICES, data);
+          return data;
+        }
       } catch (err) {
         console.warn('Supabase getServices error, falling back:', err);
       }
@@ -485,7 +495,17 @@ export const db = {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('skills').select('*').order('display_order', { ascending: true });
-        if (!error && data && data.length > 0) return data;
+        if (error) throw error;
+        if (data && data.length === 0) {
+          // Auto-seed Supabase so all browsers share the same data
+          try { await supabase.from('skills').insert(INITIAL_SKILLS); } catch { /* ignore */ }
+          setLocalData(STORAGE_KEYS.SKILLS, INITIAL_SKILLS);
+          return INITIAL_SKILLS;
+        }
+        if (data) {
+          setLocalData(STORAGE_KEYS.SKILLS, data);
+          return data;
+        }
       } catch (err) {
         console.warn('Supabase getSkills error, falling back:', err);
       }
@@ -539,9 +559,19 @@ export const db = {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('experience').select('*').order('display_order', { ascending: true });
-        if (!error && data && data.length > 0) return data;
-      } catch (err) {
-        // ignore
+        if (error) throw error;
+        if (data && data.length === 0) {
+          // Auto-seed so all browsers share the same experience data
+          try { await supabase.from('experience').insert(INITIAL_EXPERIENCE); } catch { /* ignore */ }
+          setLocalData(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
+          return [...INITIAL_EXPERIENCE].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        }
+        if (data) {
+          setLocalData(STORAGE_KEYS.EXPERIENCE, data);
+          return [...data].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        }
+      } catch {
+        // ignore, fall through to local
       }
     }
     const all = getLocalData<Experience[]>(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
@@ -556,7 +586,18 @@ export const db = {
         let q = supabase.from('testimonials').select('*').order('display_order', { ascending: true });
         if (publicOnly) q = q.eq('published', true);
         const { data, error } = await q;
-        if (!error && data && data.length > 0) return data;
+        if (error) throw error;
+        if (data && data.length === 0 && !publicOnly) {
+          // Auto-seed Supabase on first connect so all browsers share the same testimonials
+          try { await supabase.from('testimonials').insert(INITIAL_TESTIMONIALS); } catch { /* ignore */ }
+          setLocalData(STORAGE_KEYS.TESTIMONIALS, INITIAL_TESTIMONIALS);
+          return publicOnly ? INITIAL_TESTIMONIALS.filter(t => t.published) : INITIAL_TESTIMONIALS;
+        }
+        if (data) {
+          // Update local cache — Supabase is the single source of truth
+          setLocalData(STORAGE_KEYS.TESTIMONIALS, data);
+          return data;
+        }
       } catch (err) {
         console.warn('Supabase getTestimonials error:', err);
       }
@@ -1084,7 +1125,17 @@ export const db = {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('social_links').select('*').order('display_order', { ascending: true });
-        if (!error && data && data.length > 0) return data;
+        if (error) throw error;
+        if (data && data.length === 0) {
+          // Auto-seed so all browsers share the same social links
+          try { await supabase.from('social_links').insert(INITIAL_SOCIAL_LINKS); } catch { /* ignore */ }
+          setLocalData(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
+          return [...INITIAL_SOCIAL_LINKS].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        }
+        if (data) {
+          setLocalData(STORAGE_KEYS.SOCIALS, data);
+          return [...data].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        }
       } catch (err) {
         console.warn('Supabase getSocialLinks error:', err);
       }
