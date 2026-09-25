@@ -124,20 +124,26 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Hidden dummy inputs — prevents ALL major browsers (Chrome/Firefox/Safari/Edge) from autofilling the real fields */}
+        <input type="text" name="fake-email-prevent-autofill" style={{ display: 'none' }} autoComplete="username" tabIndex={-1} aria-hidden="true" readOnly />
+        <input type="password" name="fake-pass-prevent-autofill" style={{ display: 'none' }} autoComplete="new-password" tabIndex={-1} aria-hidden="true" readOnly />
+
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <div>
             <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
               Admin Email
             </label>
             <div className="relative">
               <input
-                id="admin-email"
+                id="admin-email-field"
+                name="admin-email-field"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter admin email"
-                autoComplete="username"
+                autoComplete="off"
+                spellCheck={false}
                 disabled={isLocked}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
               />
@@ -151,13 +157,14 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
             </label>
             <div className="relative">
               <input
-                id="admin-password"
+                id="admin-password-field"
+                name="admin-password-field"
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 disabled={isLocked}
                 className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
               />
