@@ -1,47 +1,67 @@
--- =========================================================
--- SRKWORKS / AURA STUDIO: COMPLETE SUPABASE POSTGRESQL SCHEMA
--- Paste this entire script into your Supabase Dashboard:
--- Supabase -> Project -> SQL Editor -> New Query -> Run
--- =========================================================
+-- =====================================================================
+-- SRKWORKS PORTFOLIO — COMPLETE SUPABASE FIX SCRIPT
+-- Run this ONCE in: Supabase Dashboard → SQL Editor → New Query → Run
+-- Safe to run multiple times (all statements are idempotent)
+-- =====================================================================
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Grant schema permissions to public, anon, and authenticated roles:
+-- Grant permissions to all roles
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 
--- =========================================================
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+
+-- =====================================================================
 -- 1. SITE SETTINGS
--- =========================================================
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS site_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  title_badge TEXT,
-  headline TEXT,
+  name TEXT NOT NULL DEFAULT 'Sharik Khan',
+  logo_initial TEXT DEFAULT 'S',
+  short_title TEXT,
+  location TEXT,
+  title_badge TEXT DEFAULT 'Full-Stack Engineer & UI/UX Designer',
+  headline TEXT DEFAULT 'I CREATE',
+  hero_phrases TEXT[],
   hero_supporting_text TEXT,
-  profile_image TEXT,
-  availability_status TEXT,
-  primary_cta_label TEXT,
-  secondary_cta_label TEXT,
-  contact_headline TEXT,
+  profile_image TEXT DEFAULT '/hero-sculpture.jpg',
+  availability_status TEXT DEFAULT 'Open to Projects',
+  primary_cta_label TEXT DEFAULT 'View My Work',
+  secondary_cta_label TEXT DEFAULT 'Let''s Work Together',
+  contact_headline TEXT DEFAULT 'LET''S BUILD SOMETHING USEFUL.',
   contact_subtext TEXT,
-  email TEXT,
+  email TEXT DEFAULT 'dev.sharikhan@gmail.com',
   whatsapp TEXT,
   linkedin TEXT,
   github TEXT,
   twitter TEXT,
-  seo_title TEXT,
+  seo_title TEXT DEFAULT 'Sharik Khan — Full-Stack Engineer & UI/UX Designer',
   seo_description TEXT,
+  favicon_url TEXT,
   og_image TEXT,
+  social_title TEXT,
+  social_description TEXT,
+  accent_gradient TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
+-- Add missing columns to existing site_settings
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_initial TEXT DEFAULT 'S';
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS short_title TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_phrases TEXT[];
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS favicon_url TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS social_title TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS social_description TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS accent_gradient TEXT;
+
+
+-- =====================================================================
 -- 2. PROJECTS TABLE
--- =========================================================
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -60,7 +80,7 @@ CREATE TABLE IF NOT EXISTS projects (
   featured BOOLEAN DEFAULT false,
   live_url TEXT,
   case_study_url TEXT,
-  button_text TEXT DEFAULT 'View Case Study ↗',
+  button_text TEXT DEFAULT 'View Case Study',
   display_order INTEGER DEFAULT 0,
   published BOOLEAN DEFAULT true,
   client TEXT,
@@ -71,25 +91,29 @@ CREATE TABLE IF NOT EXISTS projects (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Ensure all project columns exist even on pre-existing Supabase tables:
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS title TEXT;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS button_text TEXT DEFAULT 'View Case Study ↗';
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS case_study_url TEXT;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS cover_image TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS short_description TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS cover_image TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS video_url TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS technologies TEXT[] DEFAULT '{}';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS live_url TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS case_study_url TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS button_text TEXT DEFAULT 'View Case Study';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS client TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS metrics TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS challenge TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS solution TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
--- =========================================================
+
+-- =====================================================================
 -- 3. SERVICES TABLE
--- =========================================================
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS services (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -101,15 +125,25 @@ CREATE TABLE IF NOT EXISTS services (
   technologies TEXT[] DEFAULT '{}',
   starting_price TEXT,
   cta_label TEXT DEFAULT 'Inquire Service',
+  link_url TEXT,
   display_order INTEGER DEFAULT 0,
   featured BOOLEAN DEFAULT false,
   enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
+ALTER TABLE services ADD COLUMN IF NOT EXISTS detailed_description TEXT;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS features TEXT[] DEFAULT '{}';
+ALTER TABLE services ADD COLUMN IF NOT EXISTS technologies TEXT[] DEFAULT '{}';
+ALTER TABLE services ADD COLUMN IF NOT EXISTS starting_price TEXT;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS cta_label TEXT DEFAULT 'Inquire Service';
+ALTER TABLE services ADD COLUMN IF NOT EXISTS link_url TEXT;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false;
+
+
+-- =====================================================================
 -- 4. SKILLS TABLE
--- =========================================================
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS skills (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -120,41 +154,62 @@ CREATE TABLE IF NOT EXISTS skills (
   enabled BOOLEAN DEFAULT true
 );
 
--- =========================================================
--- 5. TESTIMONIALS TABLE
--- =========================================================
+ALTER TABLE skills ADD COLUMN IF NOT EXISTS proficiency INTEGER DEFAULT 90;
+ALTER TABLE skills ADD COLUMN IF NOT EXISTS icon TEXT;
+
+
+-- =====================================================================
+-- 5. EXPERIENCE TABLE
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS experience (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT '',
+  company TEXT NOT NULL DEFAULT '',
+  period TEXT NOT NULL DEFAULT '',
+  description TEXT,
+  technologies TEXT[] DEFAULT '{}',
+  display_order INTEGER DEFAULT 0
+);
+
+ALTER TABLE experience ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE experience ADD COLUMN IF NOT EXISTS technologies TEXT[] DEFAULT '{}';
+
+
+-- =====================================================================
+-- 6. TESTIMONIALS TABLE — with ALL extended columns
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS testimonials (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  role TEXT,
-  company TEXT,
+  role TEXT DEFAULT 'Client',
+  company TEXT DEFAULT '',
   avatar TEXT,
   testimonial TEXT NOT NULL,
   rating INTEGER DEFAULT 5,
   published BOOLEAN DEFAULT true,
   display_order INTEGER DEFAULT 0,
-  -- Extended columns for client work showcase & public review submissions:
-  client_project TEXT,
-  project_outcome TEXT,
-  project_image TEXT,
-  project_link TEXT,
+  client_project TEXT DEFAULT '',
+  project_outcome TEXT DEFAULT '',
+  project_image TEXT DEFAULT '',
+  project_link TEXT DEFAULT '',
   tags TEXT[] DEFAULT '{}',
-  client_logo TEXT,
+  client_logo TEXT DEFAULT '',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Safe migration: add extended columns to existing testimonials tables
-ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_project TEXT;
-ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_outcome TEXT;
-ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_image TEXT;
-ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_link TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_project TEXT DEFAULT '';
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_outcome TEXT DEFAULT '';
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_image TEXT DEFAULT '';
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_link TEXT DEFAULT '';
 ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
-ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_logo TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_logo TEXT DEFAULT '';
 ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
--- =========================================================
--- 6. CONTACT MESSAGES TABLE
--- =========================================================
+
+-- =====================================================================
+-- 7. CONTACT MESSAGES TABLE
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS contact_messages (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -166,9 +221,10 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
--- 7. THEME SETTINGS
--- =========================================================
+
+-- =====================================================================
+-- 8. THEME SETTINGS
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS theme_settings (
   id TEXT PRIMARY KEY DEFAULT 'current_theme',
   preset TEXT DEFAULT 'default',
@@ -188,9 +244,10 @@ CREATE TABLE IF NOT EXISTS theme_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
--- 8. HERO SETTINGS
--- =========================================================
+
+-- =====================================================================
+-- 9. HERO SETTINGS
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS hero_settings (
   id TEXT PRIMARY KEY DEFAULT 'current_hero',
   eyebrow TEXT DEFAULT 'HEY, I''M SHARIK',
@@ -205,9 +262,10 @@ CREATE TABLE IF NOT EXISTS hero_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
--- 9. NAVBAR SETTINGS
--- =========================================================
+
+-- =====================================================================
+-- 10. NAVBAR SETTINGS
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS navbar_settings (
   id TEXT PRIMARY KEY DEFAULT 'current_navbar',
   brand_name TEXT DEFAULT 'SHARIK KHAN',
@@ -218,13 +276,14 @@ CREATE TABLE IF NOT EXISTS navbar_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
--- 10. ABOUT SETTINGS
--- =========================================================
+
+-- =====================================================================
+-- 11. ABOUT SETTINGS
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS about_settings (
   id TEXT PRIMARY KEY DEFAULT 'current_about',
   badge TEXT DEFAULT 'The Philosophy',
-  heading TEXT DEFAULT 'DESIGN × CODE × AI',
+  heading TEXT DEFAULT 'DESIGN x CODE x AI',
   introduction TEXT,
   detailed_description TEXT,
   profile_image TEXT DEFAULT '/hero-sculpture.jpg',
@@ -235,9 +294,10 @@ CREATE TABLE IF NOT EXISTS about_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
--- 11. SECTION SETTINGS
--- =========================================================
+
+-- =====================================================================
+-- 12. SECTION SETTINGS
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS section_settings (
   id TEXT PRIMARY KEY DEFAULT 'current_sections',
   hero BOOLEAN DEFAULT true,
@@ -252,9 +312,10 @@ CREATE TABLE IF NOT EXISTS section_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- =========================================================
--- 12. SOCIAL LINKS
--- =========================================================
+
+-- =====================================================================
+-- 13. SOCIAL LINKS
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS social_links (
   id TEXT PRIMARY KEY,
   platform TEXT NOT NULL,
@@ -265,13 +326,18 @@ CREATE TABLE IF NOT EXISTS social_links (
   display_order INTEGER DEFAULT 0
 );
 
--- =========================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
--- =========================================================
+ALTER TABLE social_links ADD COLUMN IF NOT EXISTS icon TEXT;
+ALTER TABLE social_links ADD COLUMN IF NOT EXISTS label TEXT;
+
+
+-- =====================================================================
+-- ROW LEVEL SECURITY (RLS) — OPEN POLICIES FOR ALL TABLES
+-- =====================================================================
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE skills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experience ENABLE ROW LEVEL SECURITY;
 ALTER TABLE testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE theme_settings ENABLE ROW LEVEL SECURITY;
@@ -281,7 +347,24 @@ ALTER TABLE about_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE section_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE social_links ENABLE ROW LEVEL SECURITY;
 
--- Clean existing policies for idempotency
+-- Drop ALL existing policies (clean slate to avoid conflicts)
+DROP POLICY IF EXISTS "Public full access site_settings" ON site_settings;
+DROP POLICY IF EXISTS "Public full access projects" ON projects;
+DROP POLICY IF EXISTS "Public full access services" ON services;
+DROP POLICY IF EXISTS "Public full access skills" ON skills;
+DROP POLICY IF EXISTS "Public full access experience" ON experience;
+DROP POLICY IF EXISTS "Public full access testimonials" ON testimonials;
+DROP POLICY IF EXISTS "Public full access contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Public full access theme_settings" ON theme_settings;
+DROP POLICY IF EXISTS "Public full access hero_settings" ON hero_settings;
+DROP POLICY IF EXISTS "Public full access navbar_settings" ON navbar_settings;
+DROP POLICY IF EXISTS "Public full access about_settings" ON about_settings;
+DROP POLICY IF EXISTS "Public full access section_settings" ON section_settings;
+DROP POLICY IF EXISTS "Public full access social_links" ON social_links;
+DROP POLICY IF EXISTS "Admin full access navbar_settings" ON navbar_settings;
+DROP POLICY IF EXISTS "Admin full access about_settings" ON about_settings;
+DROP POLICY IF EXISTS "Admin full access section_settings" ON section_settings;
+DROP POLICY IF EXISTS "Admin full access social_links" ON social_links;
 DROP POLICY IF EXISTS "Public can view site settings" ON site_settings;
 DROP POLICY IF EXISTS "Public can view projects" ON projects;
 DROP POLICY IF EXISTS "Enable all operations on projects" ON projects;
@@ -295,47 +378,40 @@ DROP POLICY IF EXISTS "Public can view about settings" ON about_settings;
 DROP POLICY IF EXISTS "Public can view section settings" ON section_settings;
 DROP POLICY IF EXISTS "Public can view social links" ON social_links;
 
--- Public full access policies (permits Admin CMS actions & live site reads):
-DROP POLICY IF EXISTS "Public full access site_settings" ON site_settings;
-DROP POLICY IF EXISTS "Public full access projects" ON projects;
-DROP POLICY IF EXISTS "Public full access services" ON services;
-DROP POLICY IF EXISTS "Public full access skills" ON skills;
-DROP POLICY IF EXISTS "Public full access testimonials" ON testimonials;
-DROP POLICY IF EXISTS "Public full access contact_messages" ON contact_messages;
-DROP POLICY IF EXISTS "Public full access theme_settings" ON theme_settings;
-DROP POLICY IF EXISTS "Public full access hero_settings" ON hero_settings;
-DROP POLICY IF EXISTS "Public full access navbar_settings" ON navbar_settings;
-DROP POLICY IF EXISTS "Public full access about_settings" ON about_settings;
-DROP POLICY IF EXISTS "Public full access section_settings" ON section_settings;
-DROP POLICY IF EXISTS "Public full access social_links" ON social_links;
+-- Create fresh open policies — anon + authenticated can do everything
+CREATE POLICY "Public full access site_settings"    ON site_settings    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access projects"         ON projects         FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access services"         ON services         FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access skills"           ON skills           FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access experience"       ON experience       FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access testimonials"     ON testimonials     FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access contact_messages" ON contact_messages FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access theme_settings"   ON theme_settings   FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access hero_settings"    ON hero_settings    FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access navbar_settings"  ON navbar_settings  FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access about_settings"   ON about_settings   FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access section_settings" ON section_settings FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access social_links"     ON social_links     FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-CREATE POLICY "Public full access site_settings" ON site_settings FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access projects" ON projects FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access services" ON services FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access skills" ON skills FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access testimonials" ON testimonials FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access contact_messages" ON contact_messages FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access theme_settings" ON theme_settings FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access hero_settings" ON hero_settings FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access navbar_settings" ON navbar_settings FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access about_settings" ON about_settings FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access section_settings" ON section_settings FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "Public full access social_links" ON social_links FOR ALL TO public USING (true) WITH CHECK (true);
 
--- =========================================================
--- STORAGE BUCKETS SETUP & POLICIES
--- =========================================================
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('project-images', 'project-images', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+-- =====================================================================
+-- STORAGE BUCKETS
+-- =====================================================================
+INSERT INTO storage.buckets (id, name, public)
+  VALUES ('project-images', 'project-images', true)
+  ON CONFLICT (id) DO UPDATE SET public = true;
 
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('profile-images', 'profile-images', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+INSERT INTO storage.buckets (id, name, public)
+  VALUES ('profile-images', 'profile-images', true)
+  ON CONFLICT (id) DO UPDATE SET public = true;
 
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('service-assets', 'service-assets', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+INSERT INTO storage.buckets (id, name, public)
+  VALUES ('service-assets', 'service-assets', true)
+  ON CONFLICT (id) DO UPDATE SET public = true;
+
+INSERT INTO storage.buckets (id, name, public)
+  VALUES ('testimonial-images', 'testimonial-images', true)
+  ON CONFLICT (id) DO UPDATE SET public = true;
 
 DROP POLICY IF EXISTS "Public storage read" ON storage.objects;
 DROP POLICY IF EXISTS "Allow storage upload" ON storage.objects;
@@ -343,14 +419,19 @@ DROP POLICY IF EXISTS "Allow storage update" ON storage.objects;
 DROP POLICY IF EXISTS "Allow storage delete" ON storage.objects;
 
 CREATE POLICY "Public storage read" ON storage.objects
-  FOR SELECT USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+  FOR SELECT USING (bucket_id IN ('project-images', 'profile-images', 'service-assets', 'testimonial-images'));
 
 CREATE POLICY "Allow storage upload" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+  FOR INSERT WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets', 'testimonial-images'));
 
 CREATE POLICY "Allow storage update" ON storage.objects
-  FOR UPDATE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'))
-  WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+  FOR UPDATE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets', 'testimonial-images'))
+  WITH CHECK (bucket_id IN ('project-images', 'profile-images', 'service-assets', 'testimonial-images'));
 
 CREATE POLICY "Allow storage delete" ON storage.objects
-  FOR DELETE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets'));
+  FOR DELETE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets', 'testimonial-images'));
+
+
+-- =====================================================================
+-- DONE -- After running, hard-refresh both browsers (Ctrl+Shift+R)
+-- =====================================================================
