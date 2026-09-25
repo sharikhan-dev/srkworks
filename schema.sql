@@ -132,8 +132,25 @@ CREATE TABLE IF NOT EXISTS testimonials (
   testimonial TEXT NOT NULL,
   rating INTEGER DEFAULT 5,
   published BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0
+  display_order INTEGER DEFAULT 0,
+  -- Extended columns for client work showcase & public review submissions:
+  client_project TEXT,
+  project_outcome TEXT,
+  project_image TEXT,
+  project_link TEXT,
+  tags TEXT[] DEFAULT '{}',
+  client_logo TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+-- Safe migration: add extended columns to existing testimonials tables
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_project TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_outcome TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_image TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_link TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_logo TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
 -- =========================================================
 -- 6. CONTACT MESSAGES TABLE

@@ -8,9 +8,18 @@ import {
   TrendingUp,
   Sparkles,
   CheckCircle2,
-  Building2
+  Building2,
+  Send,
+  User,
+  Briefcase,
+  Mail,
+  MessageSquare,
+  X,
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 import { Testimonial } from '../../types';
+import { db } from '../../services/db';
 
 interface TestimonialsSectionProps {
   testimonials: Testimonial[];
@@ -35,8 +44,273 @@ const TRUST_METRICS = [
   { value: '0', label: 'Downtime Regressions', subtext: 'Engineered for resilience' }
 ];
 
+interface ReviewFormState {
+  name: string;
+  role: string;
+  company: string;
+  email: string;
+  project_worked_on: string;
+  testimonial: string;
+  rating: number;
+}
+
+const INITIAL_FORM: ReviewFormState = {
+  name: '',
+  role: '',
+  company: '',
+  email: '',
+  project_worked_on: '',
+  testimonial: '',
+  rating: 5
+};
+
+function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex items-center gap-1.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          className="transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+          aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+        >
+          <Star
+            className={`w-7 h-7 transition-colors ${
+              (hovered || value) >= star
+                ? 'fill-amber-300 text-amber-300'
+                : 'text-neutral-600 fill-neutral-700/50'
+            }`}
+          />
+        </button>
+      ))}
+      <span className="text-xs text-neutral-400 ml-1">
+        {['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][hovered || value]}
+      </span>
+    </div>
+  );
+}
+
+function ReviewForm({ onClose }: { onClose: () => void }) {
+  const [form, setForm] = useState<ReviewFormState>(INITIAL_FORM);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const set = (field: keyof ReviewFormState) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.testimonial.trim() || form.testimonial.trim().length < 20) {
+      setErrorMsg('Please provide your name and a review of at least 20 characters.');
+      return;
+    }
+    setStatus('loading');
+    setErrorMsg('');
+    try {
+      const res = await db.submitPublicReview({
+        name: form.name,
+        role: form.role,
+        company: form.company,
+        testimonial: form.testimonial,
+        rating: form.rating,
+        email: form.email,
+        project_worked_on: form.project_worked_on
+      });
+      if (res.success) {
+        setStatus('success');
+      } else {
+        setErrorMsg(res.error || 'Failed to submit. Please try again.');
+        setStatus('error');
+      }
+    } catch {
+      setErrorMsg('An unexpected error occurred. Please try again.');
+      setStatus('error');
+    }
+  };
+
+  if (status === 'success') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="py-12 px-6 text-center flex flex-col items-center gap-4"
+      >
+        <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-2">
+          <CheckCircle className="w-8 h-8 text-emerald-400" />
+        </div>
+        <h3 className="text-xl font-bold text-white">Review Submitted!</h3>
+        <p className="text-sm text-neutral-400 max-w-sm leading-relaxed">
+          Thank you, <span className="text-white font-semibold">{form.name}</span>! Your review has been received and will be published after a quick review.
+        </p>
+        <button
+          onClick={onClose}
+          className="mt-4 px-6 py-2.5 rounded-full bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition-colors cursor-pointer"
+        >
+          Done
+        </button>
+      </motion.div>
+    );
+  }
+
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 transition-colors';
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 p-1">
+      {/* Rating */}
+      <div>
+        <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-2">
+          Your Rating *
+        </label>
+        <StarRatingInput value={form.rating} onChange={(v) => setForm((f) => ({ ...f, rating: v }))} />
+      </div>
+
+      {/* Name + Role */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+            Full Name *
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={set('name')}
+              placeholder="Jane Smith"
+              className={`${inputClass} pl-10`}
+            />
+            <User className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+            Your Role
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={form.role}
+              onChange={set('role')}
+              placeholder="Founder, CEO, CTO..."
+              className={`${inputClass} pl-10`}
+            />
+            <Briefcase className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
+          </div>
+        </div>
+      </div>
+
+      {/* Company + Email */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+            Company / Brand
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={form.company}
+              onChange={set('company')}
+              placeholder="Your Company"
+              className={`${inputClass} pl-10`}
+            />
+            <Building2 className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+            Email (private)
+          </label>
+          <div className="relative">
+            <input
+              type="email"
+              value={form.email}
+              onChange={set('email')}
+              placeholder="jane@company.com"
+              className={`${inputClass} pl-10`}
+            />
+            <Mail className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
+          </div>
+        </div>
+      </div>
+
+      {/* Project */}
+      <div>
+        <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+          Project We Worked On (optional)
+        </label>
+        <input
+          type="text"
+          value={form.project_worked_on}
+          onChange={set('project_worked_on')}
+          placeholder="e.g. Brand website redesign, AI automation system..."
+          className={inputClass}
+        />
+      </div>
+
+      {/* Review */}
+      <div>
+        <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-1.5">
+          Your Review *
+        </label>
+        <div className="relative">
+          <textarea
+            required
+            rows={4}
+            value={form.testimonial}
+            onChange={set('testimonial')}
+            minLength={20}
+            placeholder="Share your experience working with Sharik — results delivered, communication, quality..."
+            className={`${inputClass} resize-none pl-10 pt-2.5`}
+          />
+          <MessageSquare className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
+        </div>
+        <p className="text-[11px] text-neutral-500 mt-1">
+          {form.testimonial.length}/20 min characters
+          {form.testimonial.length >= 20 && <span className="text-emerald-400 ml-1">✓</span>}
+        </p>
+      </div>
+
+      {/* Error */}
+      {(status === 'error' || errorMsg) && (
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+          {errorMsg}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={status === 'loading'}
+        className="w-full py-3 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-md active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+      >
+        {status === 'loading' ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Submitting...</span>
+          </>
+        ) : (
+          <>
+            <span>Submit My Review</span>
+            <Send className="w-4 h-4" />
+          </>
+        )}
+      </button>
+
+      <p className="text-[11px] text-neutral-500 text-center">
+        Your review will appear after approval. Email is kept private and never shared.
+      </p>
+    </form>
+  );
+}
+
 export function TestimonialsSection({ testimonials, onNavigateContact }: TestimonialsSectionProps) {
   const [filter, setFilter] = useState<ViewFilter>('all');
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const publishedTestimonials = testimonials.filter((t) => t.published);
 
   if (publishedTestimonials.length === 0) return null;
@@ -311,13 +585,86 @@ export function TestimonialsSection({ testimonials, onNavigateContact }: Testimo
         </AnimatePresence>
       </motion.div>
 
+      {/* Leave a Review CTA */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="mt-10 relative"
+      >
+        <AnimatePresence mode="wait">
+          {!showReviewForm ? (
+            <motion.div
+              key="review-cta"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="glass-surface rounded-3xl p-6 sm:p-8 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-56 h-56 bg-gradient-to-bl from-violet-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+              <div className="text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 text-xs font-mono text-violet-300 mb-1">
+                  <Star className="w-3.5 h-3.5 fill-violet-300 text-violet-300" />
+                  Leave a Review
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white">
+                  Worked with me recently?
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-400 mt-1 max-w-md">
+                  I'd love to hear your experience. Share an honest review — it helps others make informed decisions and helps me improve.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="px-6 py-3.5 rounded-full bg-white hover:bg-neutral-200 text-black font-semibold text-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-white/10 shrink-0 flex items-center gap-2 cursor-pointer"
+              >
+                <span>Write a Review</span>
+                <Star className="w-4 h-4" />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="review-form"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="glass-surface rounded-3xl border border-white/10 overflow-hidden relative"
+            >
+              {/* Form header */}
+              <div className="flex items-center justify-between p-6 sm:px-8 pb-4 border-b border-white/[0.07]">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-mono text-violet-300 mb-0.5">
+                    <Star className="w-3 h-3 fill-violet-300 text-violet-300" />
+                    Client Review
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Share Your Experience</h3>
+                  <p className="text-xs text-neutral-400 mt-0.5">Takes less than 2 minutes — reviews go live after approval</p>
+                </div>
+                <button
+                  onClick={() => setShowReviewForm(false)}
+                  className="p-2 rounded-xl bg-white/[0.05] hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                  aria-label="Close review form"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 sm:p-8 pt-5">
+                <ReviewForm onClose={() => setShowReviewForm(false)} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
       {/* Bottom Conversion Callout */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5 }}
-        className="mt-14 glass-surface rounded-3xl p-6 sm:p-8 border border-white/10 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden"
+        className="mt-8 glass-surface rounded-3xl p-6 sm:p-8 border border-white/10 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
 

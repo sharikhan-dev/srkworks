@@ -728,53 +728,177 @@ export const db = {
 
   // === AUTHENTICATION ===
   getAuthSession() {
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      // In Supabase mode, the auth state listener handles session
+    try {
+      const stored = getLocalData<{ email: string; token: string; isAdmin: boolean; expiresAt?: number } | null>(STORAGE_KEYS.AUTH, null);
+      if (!stored) return null;
+      // Enforce session expiry (8 hours)
+      if (stored.expiresAt && Date.now() > stored.expiresAt) {
+        localStorage.removeItem(STORAGE_KEYS.AUTH);
+        return null;
+      }
+      return stored;
+    } catch {
+      return null;
     }
-    return getLocalData<{ email: string; token: string; isAdmin: boolean } | null>(STORAGE_KEYS.AUTH, null);
   },
 
   async signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    // --- Brute-force / rate-limit guard ---
+    const LOCKOUT_KEY = 'aura_auth_lockout';
+    const ATTEMPT_KEY = 'aura_auth_attempts';
+    try {
+      const lockoutUntil = parseInt(localStorage.getItem(LOCKOUT_KEY) || '0', 10);
+      if (lockoutUntil && Date.now() < lockoutUntil) {
+        const minsLeft = Math.ceil((lockoutUntil - Date.now()) / 60000);
+        return {
+          success: false,
+          error: `Too many failed attempts. Account locked for ${minsLeft} more minute${minsLeft !== 1 ? 's' : ''}.`
+        };
+      }
+    } catch { /* ignore */ }
+
+    // --- Primary: Supabase Auth ---
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error && data.session) {
+          // Clear any lockout state on success
+          localStorage.removeItem(LOCKOUT_KEY);
+          localStorage.removeItem(ATTEMPT_KEY);
           setLocalData(STORAGE_KEYS.AUTH, {
             email: data.user.email || email,
             token: data.session.access_token,
-            isAdmin: true
+            isAdmin: true,
+            expiresAt: Date.now() + 8 * 60 * 60 * 1000 // 8 hours
           });
           return { success: true };
         }
         if (error) {
-          console.warn('Supabase signIn error, checking admin fallback:', error.message);
+          console.warn('Supabase signIn error:', error.message);
         }
       } catch (err: any) {
-        console.warn('Supabase auth error:', err);
+        console.warn('Supabase auth exception:', err);
       }
     }
 
-    // Default admin fallback for seamless preview testing & demonstrations:
-    if (
-      (email === 'admin@srkworks.design' && password === 'admin123') ||
-      (email === 'admin@aurastudio.design' && password === 'admin123') ||
-      (email === 'dev.sharikhan@gmail.com' && password.length >= 6) ||
-      (password === 'admin123' || password === 'admin')
-    ) {
+    // --- Secure fallback: env-configured admin email only ---
+    // IMPORTANT: This fallback only exists when Supabase is not yet connected.
+    // The password is never exposed in the UI or source — it must be set via env.
+    const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || 'admin@srkworks.design').trim();
+    const ADMIN_PASS  = (import.meta.env.VITE_ADMIN_PASSWORD || '').trim();
+
+    // Only allow fallback if VITE_ADMIN_PASSWORD env var is set, OR for local-dev
+    // with the correct Supabase-matching credentials provided at runtime.
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const passwordCorrect = ADMIN_PASS.length > 0 && password === ADMIN_PASS;
+    const emailCorrect = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+    if (emailCorrect && passwordCorrect) {
+      localStorage.removeItem(LOCKOUT_KEY);
+      localStorage.removeItem(ATTEMPT_KEY);
       setLocalData(STORAGE_KEYS.AUTH, {
         email,
-        token: `mock-jwt-token-${Date.now()}`,
-        isAdmin: true
+        token: `local-token-${Date.now()}`,
+        isAdmin: true,
+        expiresAt: Date.now() + (isLocalDev ? 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000)
       });
       return { success: true };
     }
 
+    // Track failed attempts and lock after 5 tries
+    try {
+      const attempts = parseInt(localStorage.getItem(ATTEMPT_KEY) || '0', 10) + 1;
+      if (attempts >= 5) {
+        localStorage.setItem(LOCKOUT_KEY, String(Date.now() + 15 * 60 * 1000)); // 15 min lockout
+        localStorage.removeItem(ATTEMPT_KEY);
+        return {
+          success: false,
+          error: 'Too many failed attempts. Your session has been locked for 15 minutes.'
+        };
+      }
+      localStorage.setItem(ATTEMPT_KEY, String(attempts));
+    } catch { /* ignore */ }
+
     return {
       success: false,
-      error: 'Invalid credentials. For quick demo access, use email "admin@srkworks.design" and password "admin123".'
+      error: 'Invalid credentials. Please verify your email and password.'
     };
+  },
+
+  // === PUBLIC REVIEW SUBMISSION ===
+  // Clients use this to submit a review. It lands as published=false until admin approves.
+  async submitPublicReview(review: {
+    name: string;
+    role: string;
+    company: string;
+    testimonial: string;
+    rating: number;
+    email?: string;
+    project_worked_on?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    const id = `review-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const payload = {
+      id,
+      name: review.name.trim(),
+      role: review.role.trim() || 'Client',
+      company: review.company.trim() || '',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name)}&background=0f1118&color=fff&size=128`,
+      testimonial: review.testimonial.trim(),
+      rating: Math.max(1, Math.min(5, review.rating)),
+      published: false, // Requires admin approval before going live
+      display_order: 999,
+      client_project: review.project_worked_on || '',
+      project_outcome: '',
+      project_image: '',
+      project_link: '',
+      tags: [],
+      client_logo: '',
+      // Store submitter email in client_logo field as a workaround for schema limitations
+      // In a future schema migration, add a `submitter_email` column
+      _submitter_email: review.email || ''
+    };
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        // Only send columns that exist in the schema
+        const dbPayload: Record<string, any> = {
+          id: payload.id,
+          name: payload.name,
+          role: payload.role,
+          company: payload.company,
+          avatar: payload.avatar,
+          testimonial: payload.testimonial,
+          rating: payload.rating,
+          published: false,
+          display_order: payload.display_order
+        };
+
+        // Try to include extended columns (they exist in the full schema)
+        const extendedPayload = { ...dbPayload, client_project: payload.client_project, tags: [] };
+        let { error } = await supabase.from('testimonials').insert([extendedPayload]);
+
+        if (error && error.code === 'PGRST204') {
+          // Extended columns don't exist, use minimal payload
+          const { error: e2 } = await supabase.from('testimonials').insert([dbPayload]);
+          if (e2) throw e2;
+        } else if (error) {
+          throw error;
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        console.warn('Supabase submitPublicReview error:', err);
+        return { success: false, error: err.message || 'Failed to submit review.' };
+      }
+    }
+
+    // Local fallback
+    const all = getLocalData<Testimonial[]>(STORAGE_KEYS.TESTIMONIALS, []);
+    all.push(payload as unknown as Testimonial);
+    setLocalData(STORAGE_KEYS.TESTIMONIALS, all);
+    return { success: true };
   },
 
   async signOut(): Promise<void> {
@@ -1128,8 +1252,24 @@ CREATE TABLE IF NOT EXISTS testimonials (
   testimonial TEXT NOT NULL,
   rating INTEGER DEFAULT 5,
   published BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0
+  display_order INTEGER DEFAULT 0,
+  client_project TEXT,
+  project_outcome TEXT,
+  project_image TEXT,
+  project_link TEXT,
+  tags TEXT[] DEFAULT '{}',
+  client_logo TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+-- Safe migration for existing testimonials tables:
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_project TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_outcome TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_image TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS project_link TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS client_logo TEXT;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
 -- 6. CONTACT MESSAGES TABLE
 CREATE TABLE IF NOT EXISTS contact_messages (

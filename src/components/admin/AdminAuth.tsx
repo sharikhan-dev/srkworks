@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Shield, Lock, Mail, ArrowRight, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowRight, AlertCircle, ArrowLeft, Eye, EyeOff, Clock, ShieldAlert } from 'lucide-react';
 import { db } from '../../services/db';
 
 interface AdminAuthProps {
@@ -9,26 +9,55 @@ interface AdminAuthProps {
 }
 
 export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
-  const [email, setEmail] = useState('admin@srkworks.design');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockMinsLeft, setLockMinsLeft] = useState(0);
+
+  // Check lockout state on mount and keep it refreshed
+  useEffect(() => {
+    const checkLock = () => {
+      try {
+        const lockoutUntil = parseInt(localStorage.getItem('aura_auth_lockout') || '0', 10);
+        if (lockoutUntil && Date.now() < lockoutUntil) {
+          setIsLocked(true);
+          setLockMinsLeft(Math.ceil((lockoutUntil - Date.now()) / 60000));
+        } else {
+          setIsLocked(false);
+          setLockMinsLeft(0);
+        }
+      } catch { /* ignore */ }
+    };
+    checkLock();
+    const interval = setInterval(checkLock, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) return;
     setError('');
     setIsLoading(true);
 
     try {
-      const res = await db.signIn(email, password);
+      const res = await db.signIn(email.trim(), password);
       if (res.success) {
         onSuccess();
       } else {
-        setError(res.error || 'Authentication failed. Please verify credentials.');
+        const msg = res.error || 'Authentication failed.';
+        setError(msg);
+        // Re-check lockout after a failed attempt
+        const lockoutUntil = parseInt(localStorage.getItem('aura_auth_lockout') || '0', 10);
+        if (lockoutUntil && Date.now() < lockoutUntil) {
+          setIsLocked(true);
+          setLockMinsLeft(Math.ceil((lockoutUntil - Date.now()) / 60000));
+        }
       }
-    } catch (err: any) {
-      setError('An error occurred during authentication.');
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -36,7 +65,7 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 py-8 bg-[#08090c] text-white overflow-y-auto">
-      {/* Background blur and grid */}
+      {/* Background dot grid */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
 
@@ -53,20 +82,42 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
           <span>Return to Site</span>
         </button>
 
-
         <div className="text-center mt-6 mb-8">
-          <div className="w-12 h-12 rounded-2xl glass-pill flex items-center justify-center mx-auto mb-4 bg-white/[0.05] border border-white/10">
-            <Shield className="w-6 h-6 text-white" />
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 border ${isLocked ? 'bg-red-500/10 border-red-500/30' : 'bg-white/[0.05] border-white/10'}`}>
+            {isLocked ? (
+              <ShieldAlert className="w-6 h-6 text-red-400" />
+            ) : (
+              <Shield className="w-6 h-6 text-white" />
+            )}
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-white">
-            Sharik Khan • Admin
+            Admin Console
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
-            Protected Supabase / Local Management Console
+            Secure access — SRK Works Management Portal
           </p>
         </div>
 
-        {error && (
+        {/* Lockout Banner */}
+        {isLocked && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="w-4 h-4 flex-shrink-0 text-red-400" />
+              <span className="font-semibold text-red-300">Account Temporarily Locked</span>
+            </div>
+            <p className="text-red-400/80 leading-relaxed pl-6">
+              Too many failed attempts detected. Access will be restored in{' '}
+              <span className="font-mono font-bold text-red-300">{lockMinsLeft} minute{lockMinsLeft !== 1 ? 's' : ''}</span>.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Error Banner (non-lockout) */}
+        {error && !isLocked && (
           <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{error}</span>
@@ -80,14 +131,17 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
             </label>
             <div className="relative">
               <input
+                id="admin-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@srkworks.design"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30"
+                placeholder="Enter admin email"
+                autoComplete="username"
+                disabled={isLocked}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
               />
-              <Mail className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
             </div>
           </div>
 
@@ -97,18 +151,22 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
             </label>
             <div className="relative">
               <input
+                id="admin-password"
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30"
+                autoComplete="current-password"
+                disabled={isLocked}
+                className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
               />
               <Lock className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3 pointer-events-none" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
                 className="absolute right-3 top-2.5 p-1 rounded-lg text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
                 {showPassword ? (
@@ -120,22 +178,25 @@ export function AdminAuth({ onSuccess, onCancel }: AdminAuthProps) {
             </div>
           </div>
 
-
           <div className="pt-2">
             <button
+              id="admin-submit-btn"
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-md active:scale-[0.99]"
+              disabled={isLoading || isLocked}
+              className="w-full py-3 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-md active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{isLoading ? 'Verifying Session...' : 'Authenticate & Enter'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{isLoading ? 'Verifying...' : isLocked ? 'Account Locked' : 'Authenticate & Enter'}</span>
+              {!isLocked && <ArrowRight className="w-4 h-4" />}
+              {isLocked && <Clock className="w-4 h-4" />}
             </button>
           </div>
         </form>
 
         <div className="mt-6 pt-5 border-t border-white/[0.06] text-center">
-          <p className="text-[11px] text-neutral-400">
-            Demo Credentials Pre-filled: <span className="text-neutral-300 font-mono">admin@srkworks.design</span> / <span className="text-neutral-300 font-mono">admin123</span>
+          <p className="text-[11px] text-neutral-500">
+            Protected by session expiry &amp; brute-force lockout.
+            <br />
+            Use your Supabase admin account credentials.
           </p>
         </div>
       </motion.div>
