@@ -433,5 +433,17 @@ CREATE POLICY "Allow storage delete" ON storage.objects
 
 
 -- =====================================================================
+-- DATA CLEANUP (WIPE ALL DUMMY / HARD DATA)
+-- Uncomment and run if you want a 100% clean empty database:
+-- =====================================================================
+-- TRUNCATE TABLE projects CASCADE;
+-- TRUNCATE TABLE services CASCADE;
+-- TRUNCATE TABLE skills CASCADE;
+-- TRUNCATE TABLE experience CASCADE;
+-- TRUNCATE TABLE testimonials CASCADE;
+-- TRUNCATE TABLE contact_messages CASCADE;
+
+-- =====================================================================
 -- DONE -- After running, hard-refresh both browsers (Ctrl+Shift+R)
 -- =====================================================================
+
