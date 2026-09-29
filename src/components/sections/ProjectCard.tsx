@@ -6,9 +6,10 @@ import { Project } from '../../types';
 interface ProjectCardProps {
   project: Project;
   index: number;
+  onNavigate?: (target: string) => void;
 }
 
-export function ProjectCard({ project, index }: ProjectCardProps) {
+export function ProjectCard({ project, index, onNavigate }: ProjectCardProps) {
   const isEven = index % 2 === 0;
   const [imgError, setImgError] = useState(false);
 
@@ -22,9 +23,17 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
     setImgError(false);
   }, [imageUrl]);
   const caseStudyUrl = project.case_study_url || project.live_url;
-  const buttonText = project.button_text?.trim() || 'View Case Study ↗';
+  const buttonText = project.button_text?.trim() || 'View Live Site ↗';
   const category = project.category || 'Portfolio';
   const year = project.year || '2026';
+  const projectSlug = project.slug || project.id;
+
+  const handleTitleClick = (e: React.MouseEvent) => {
+    if (projectSlug && onNavigate) {
+      e.preventDefault();
+      onNavigate(`projects/${projectSlug}`);
+    }
+  };
 
   return (
     <motion.article
@@ -42,8 +51,9 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
           {imageUrl && !imgError ? (
             <img
               src={imageUrl}
-              alt={title}
+              alt={`${title} project preview`}
               loading="lazy"
+              decoding="async"
               onError={() => setImgError(true)}
               className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
             />
@@ -83,7 +93,13 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
             </div>
 
             <h3 className="text-xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white group-hover:text-neutral-100 transition-colors">
-              {title}
+              <a
+                href={`/projects/${projectSlug}`}
+                onClick={handleTitleClick}
+                className="hover:underline hover:decoration-white/40"
+              >
+                {title}
+              </a>
             </h3>
 
             {description && (
@@ -93,20 +109,31 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
             )}
           </div>
 
-          {/* External Case Study / Project CTA Link */}
-          {caseStudyUrl && caseStudyUrl.trim() !== '' && caseStudyUrl !== '#' && (
-            <div className="pt-3 sm:pt-4 border-t border-white/[0.08]">
+          {/* Action Links */}
+          <div className="pt-3 sm:pt-4 border-t border-white/[0.08] flex flex-wrap items-center gap-3">
+            {caseStudyUrl && caseStudyUrl.trim() !== '' && caseStudyUrl !== '#' && (
               <a
                 href={caseStudyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-black bg-white hover:bg-neutral-200 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-black bg-white hover:bg-neutral-200 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
               >
                 <span>{buttonText}</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-            </div>
-          )}
+            )}
+
+            {projectSlug && (
+              <a
+                href={`/projects/${projectSlug}`}
+                onClick={handleTitleClick}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-medium text-neutral-300 hover:text-white glass-pill border border-white/10 hover:border-white/25 transition-all"
+              >
+                <span>Case Details</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

@@ -6,9 +6,10 @@ import { Service } from '../../types';
 interface ServicesSectionProps {
   services: Service[];
   onSelectServiceCTA?: (service: Service) => void;
+  onNavigate?: (target: string) => void;
 }
 
-export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectionProps) {
+export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: ServicesSectionProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Fallback 4 curated services matching the prompt specification exactly
@@ -42,7 +43,7 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
     {
       id: 'serv-automation',
       title: 'AI AUTOMATION',
-      slug: 'ai-automation',
+      slug: 'ai-solutions',
       icon: 'Cpu',
       short_description: 'AI-powered workflows, chatbots and business automation systems.',
       detailed_description: 'Designing autonomous business systems that capture events, process data via LLMs, and automate manual operations with zero human lag.',
@@ -55,7 +56,7 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
     {
       id: 'serv-ai-products',
       title: 'AI-POWERED PRODUCTS',
-      slug: 'ai-powered-products',
+      slug: 'ai-solutions',
       icon: 'Bot',
       short_description: 'AI interfaces, tools and digital products designed around real business problems.',
       detailed_description: 'Bespoke intelligent tools and generative UI applications engineered around genuine business ROI and delightful user experiences.',
@@ -66,6 +67,15 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
       enabled: true
     }
   ];
+
+  const handleServiceClick = (serv: any) => {
+    const targetSlug = serv.slug === 'ai-automation' || serv.slug === 'ai-powered-products' ? 'ai-solutions' : serv.slug;
+    if (onNavigate) {
+      onNavigate(`services/${targetSlug}`);
+    } else if (onSelectServiceCTA) {
+      onSelectServiceCTA(serv as Service);
+    }
+  };
 
   return (
     <section id="services" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
@@ -100,6 +110,7 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
         {displayServices.map((service, index) => {
           const stepNumber = String(index + 1).padStart(2, '0');
           const isHovered = hoveredIndex === index;
+          const targetSlug = service.slug === 'ai-automation' || service.slug === 'ai-powered-products' ? 'ai-solutions' : service.slug;
 
           return (
             <motion.div
@@ -110,7 +121,7 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
               transition={{ duration: 0.6, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              onClick={() => onSelectServiceCTA && onSelectServiceCTA(service as Service)}
+              onClick={() => handleServiceClick(service)}
               className={`group relative py-6 sm:py-12 px-2.5 sm:px-6 rounded-2xl transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 ${
                 isHovered ? 'bg-white/[0.025] backdrop-blur-md' : 'hover:bg-white/[0.015]'
               }`}
@@ -123,7 +134,16 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
 
                 <div>
                   <h3 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white group-hover:text-neutral-100 transition-colors duration-300">
-                    {service.title}
+                    <a
+                      href={`/services/${targetSlug}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleServiceClick(service);
+                      }}
+                      className="hover:underline hover:decoration-white/40"
+                    >
+                      {service.title}
+                    </a>
                   </h3>
 
                   <p className="text-xs sm:text-base text-neutral-400 max-w-xl mt-2 leading-relaxed font-normal">
@@ -144,11 +164,10 @@ export function ServicesSection({ services, onSelectServiceCTA }: ServicesSectio
                 </div>
               </div>
 
-
               {/* Right Column: Interaction Arrow & Action Indicator */}
               <div className="flex items-center justify-between md:justify-end gap-4 pt-4 md:pt-0 border-t md:border-t-0 border-white/[0.04]">
                 <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 group-hover:text-white transition-colors">
-                  Inquire
+                  View Service
                 </span>
 
                 <div className="w-10 h-10 rounded-full glass-pill flex items-center justify-center text-neutral-400 group-hover:text-black group-hover:bg-white transition-all duration-300 group-hover:scale-105 border border-white/10">

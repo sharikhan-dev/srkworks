@@ -6,9 +6,10 @@ import { ProjectCard } from './ProjectCard';
 
 interface WorkShowcaseProps {
   projects: Project[];
+  onNavigate?: (target: string) => void;
 }
 
-export function WorkShowcase({ projects }: WorkShowcaseProps) {
+export function WorkShowcase({ projects, onNavigate }: WorkShowcaseProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   // Extract unique categories dynamically
@@ -88,12 +89,12 @@ export function WorkShowcase({ projects }: WorkShowcaseProps) {
         </motion.div>
       ) : (
         <div className="space-y-6 sm:space-y-12">
-
           {filteredProjects.map((project, index) => (
             <ProjectCard
               key={project.id}
               project={project}
               index={index}
+              onNavigate={onNavigate}
             />
           ))}
         </div>

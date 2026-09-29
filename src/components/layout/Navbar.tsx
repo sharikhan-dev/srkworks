@@ -46,6 +46,7 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
   const defaultNavItems = [
     { id: 'work', label: 'Work', url: '#work', enabled: true },
     { id: 'services', label: 'Services', url: '#services', enabled: true },
+    { id: 'pricing', label: 'Pricing', url: '#pricing', enabled: true },
     { id: 'clients', label: 'Clients', url: '#clients', enabled: true },
     { id: 'about', label: 'About', url: '#about', enabled: true },
     { id: 'process', label: 'Process', url: '#process', enabled: true },
@@ -115,7 +116,9 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
               <div className="w-full h-full rounded-full bg-[#090a0d] flex items-center justify-center overflow-hidden">
                 <img
                   src="/favicon.png"
-                  alt={brandName}
+                  alt={`${brandName} Logo`}
+                  width="28"
+                  height="28"
                   className="w-full h-full object-contain p-0.5"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';

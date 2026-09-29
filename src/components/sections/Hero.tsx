@@ -105,7 +105,9 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
           <div className="relative w-full h-full">
             <img
               src={heroVisual}
-              alt="Liquid Frosted Glass Sculpture"
+              alt="SRK Works Digital Studio 3D Liquid Frosted Glass Sculpture"
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] mix-blend-screen"
             />
             {/* Subtle atmospheric gradient over the visual */}
@@ -156,6 +158,11 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
             <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[5.2rem] font-semibold tracking-[-0.03em] text-white leading-[1.08]">
               <span className="block text-white/90 font-medium">
                 {headline}
+              </span>
+
+              {/* Accessible complete value proposition for crawlers & assistive tech */}
+              <span className="sr-only">
+                Websites, Interfaces &amp; AI-Powered Digital Experiences — SRK Works Web Development, UI/UX Design &amp; AI Solutions
               </span>
 
               {/* Dynamic Animated Word Carousel */}

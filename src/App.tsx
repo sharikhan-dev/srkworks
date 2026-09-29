@@ -8,7 +8,13 @@ import { AutomationShowcase } from './components/sections/AutomationShowcase';
 import { ProcessSection } from './components/sections/ProcessSection';
 import { AboutSection } from './components/sections/AboutSection';
 import { TestimonialsSection } from './components/sections/TestimonialsSection';
+import { FAQSection } from './components/sections/FAQSection';
 import { ContactSection } from './components/sections/ContactSection';
+import { ServiceDetailPage } from './components/pages/ServiceDetailPage';
+import { ProjectDetailPage } from './components/pages/ProjectDetailPage';
+import { ServicesStorePage } from './components/pages/ServicesStorePage';
+import { ServiceStoreSection } from './components/sections/ServiceStoreSection';
+import { NotFoundPage } from './components/pages/NotFoundPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminAuth } from './components/admin/AdminAuth';
 import {
@@ -35,6 +41,56 @@ import {
   INITIAL_SECTION_VISIBILITY
 } from './services/seedData';
 
+export type CurrentRoute =
+  | { type: 'home' }
+  | { type: 'store' }
+  | { type: 'service'; slug: string }
+  | { type: 'project'; slug: string }
+  | { type: '404' };
+
+function parseRoute(pathname: string, hash: string): { route: CurrentRoute; isAdmin: boolean } {
+  const cleanPath = pathname.replace(/\/+$/, '') || '/';
+  const cleanHash = hash.toLowerCase();
+
+  const isAdmin =
+    cleanPath.includes('/admin') ||
+    cleanHash.includes('admin') ||
+    window.location.search.toLowerCase().includes('admin');
+
+  if (isAdmin) {
+    return { route: { type: 'home' }, isAdmin: true };
+  }
+
+  if (cleanPath === '/' || cleanPath === '') {
+    return { route: { type: 'home' }, isAdmin: false };
+  }
+
+  if (cleanPath === '/store' || cleanPath === '/pricing' || cleanPath === '/services') {
+    return { route: { type: 'store' }, isAdmin: false };
+  }
+
+  if (cleanPath.startsWith('/services/')) {
+    const slug = cleanPath.replace('/services/', '').trim();
+    if (slug === 'web-development' || slug === 'ui-ux-design' || slug === 'ai-solutions') {
+      return { route: { type: 'service', slug }, isAdmin: false };
+    }
+    if (slug === 'ai-automation' || slug === 'ai-powered-products') {
+      return { route: { type: 'service', slug: 'ai-solutions' }, isAdmin: false };
+    }
+    return { route: { type: '404' }, isAdmin: false };
+  }
+
+  if (cleanPath.startsWith('/projects/')) {
+    const slug = cleanPath.replace('/projects/', '').trim();
+    if (slug) {
+      return { route: { type: 'project', slug }, isAdmin: false };
+    }
+    return { route: { type: '404' }, isAdmin: false };
+  }
+
+  return { route: { type: '404' }, isAdmin: false };
+}
+
 export default function App() {
   const [settings, setSettings] = useState<SiteSettings>(INITIAL_SITE_SETTINGS);
   const [theme, setTheme] = useState<ThemeSettings>(INITIAL_THEME_SETTINGS);
@@ -49,9 +105,19 @@ export default function App() {
   const [experience, setExperience] = useState<Experience[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [activeSection, setActiveSection] = useState<string>('hero');
+  const [selectedServiceForOrder, setSelectedServiceForOrder] = useState<string | undefined>(undefined);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentRoute, setCurrentRoute] = useState<CurrentRoute>(() => {
+    const { route } = parseRoute(window.location.pathname || '', window.location.hash || '');
+    return route;
+  });
+
+  const handleSelectServiceOrder = (service: Service) => {
+    setSelectedServiceForOrder(service.title);
+    handleNavigate('contact');
+  };
 
   // Initialize DB and load public content
   const loadData = async () => {
@@ -113,16 +179,15 @@ export default function App() {
   useEffect(() => {
     loadData();
 
-    // Check if URL specifies admin route (e.g. /#admin, /admin, or ?admin=true)
+    // Check if URL specifies admin route or subpage route
     const checkRoute = () => {
-      const hash = (window.location.hash || '').toLowerCase();
-      const path = (window.location.pathname || '').toLowerCase();
-      const search = (window.location.search || '').toLowerCase();
-      const isPathAdmin =
-        path.includes('/admin') ||
-        hash.includes('admin') ||
-        search.includes('admin');
-      setIsAdminOpen(isPathAdmin);
+      const hash = window.location.hash || '';
+      const path = window.location.pathname || '';
+      const { route, isAdmin } = parseRoute(path, hash);
+      setIsAdminOpen(isAdmin);
+      if (!isAdmin) {
+        setCurrentRoute(route);
+      }
     };
 
     checkRoute();
@@ -179,26 +244,42 @@ export default function App() {
     );
   }, [theme]);
 
-  // Update document title, favicon, and SEO metadata dynamically from site settings
+  // Update document title, favicon, and SEO metadata dynamically from site settings when on homepage
   useEffect(() => {
-    if (settings.seo_title) {
-      document.title = settings.seo_title;
-    }
+    if (currentRoute.type !== 'home') return;
+
+    const defaultTitle = 'SRK Works | Web Development, UI/UX Design & AI Solutions';
+    const defaultDesc =
+      'SRK Works builds modern websites, UI/UX designs and AI-powered digital solutions for businesses, creators and startups.';
+
+    document.title = settings.seo_title || defaultTitle;
+
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc && settings.seo_description) {
-      metaDesc.setAttribute('content', settings.seo_description);
+    if (metaDesc) {
+      metaDesc.setAttribute('content', settings.seo_description || defaultDesc);
     }
 
-    // OG Title
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', 'https://srkworks.vercel.app/');
+
+    const robots = document.querySelector('meta[name="robots"]');
+    if (robots) {
+      robots.setAttribute('content', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+    }
+
+    // OG Title & Desc
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      ogTitle.setAttribute('content', settings.social_title || settings.seo_title);
+      ogTitle.setAttribute('content', settings.social_title || settings.seo_title || defaultTitle);
     }
-
-    // OG Description
     const ogDesc = document.querySelector('meta[property="og:description"]');
     if (ogDesc) {
-      ogDesc.setAttribute('content', settings.social_description || settings.seo_description);
+      ogDesc.setAttribute('content', settings.social_description || settings.seo_description || defaultDesc);
     }
 
     // Favicon
@@ -212,11 +293,12 @@ export default function App() {
       }
       link.href = settings.favicon_url;
     }
-  }, [settings]);
+  }, [settings, currentRoute]);
 
-  // Track active section via IntersectionObserver
+  // Track active section via IntersectionObserver on homepage
   useEffect(() => {
-    const sectionIds = ['hero', 'services', 'work', 'clients', 'about', 'process', 'contact'];
+    if (currentRoute.type !== 'home') return;
+    const sectionIds = ['hero', 'services', 'pricing', 'work', 'clients', 'about', 'process', 'faq', 'contact'];
     const observers: IntersectionObserver[] = [];
 
     sectionIds.forEach((id) => {
@@ -240,25 +322,73 @@ export default function App() {
     return () => {
       observers.forEach((obs) => obs.disconnect());
     };
-  }, [loading]);
+  }, [loading, currentRoute]);
 
   const handleOpenAdmin = () => {
     window.location.hash = 'admin';
     setIsAdminOpen(true);
   };
 
-  const handleNavigate = (sectionId: string) => {
-    let cleanId = sectionId.replace(/^[#/]+/, '').toLowerCase();
-    if (cleanId === 'admin') {
+  const handleNavigate = (target: string) => {
+    let clean = target.replace(/^[#/]+/, '').trim();
+
+    if (clean.toLowerCase() === 'admin') {
       handleOpenAdmin();
       return;
     }
-    if (cleanId === 'reviews' || cleanId === 'testimonials') {
-      cleanId = 'clients';
+
+    if (clean === '' || clean === 'home' || clean === 'hero') {
+      if (window.location.pathname !== '/') {
+        window.history.pushState(null, '', '/');
+      }
+      setCurrentRoute({ type: 'home' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
-    const el = document.getElementById(cleanId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+
+    if (clean === 'store' || clean === 'packages' || clean === 'services-store') {
+      window.history.pushState(null, '', '/store');
+      setCurrentRoute({ type: 'store' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (clean.startsWith('services/')) {
+      const slug = clean.replace('services/', '');
+      window.history.pushState(null, '', `/services/${slug}`);
+      setCurrentRoute({ type: 'service', slug });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (clean.startsWith('projects/')) {
+      const slug = clean.replace('projects/', '');
+      window.history.pushState(null, '', `/projects/${slug}`);
+      setCurrentRoute({ type: 'project', slug });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (clean === 'reviews' || clean === 'testimonials') {
+      clean = 'clients';
+    }
+
+    // Anchor on homepage
+    if (currentRoute.type !== 'home') {
+      window.history.pushState(null, '', `/#${clean}`);
+      setCurrentRoute({ type: 'home' });
+      setTimeout(() => {
+        const el = document.getElementById(clean);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      window.history.replaceState(null, '', `/#${clean}`);
+      const el = document.getElementById(clean);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -269,6 +399,7 @@ export default function App() {
     }
     if (window.location.pathname.toLowerCase().includes('/admin')) {
       window.history.replaceState(null, '', '/');
+      setCurrentRoute({ type: 'home' });
     }
     loadData();
   };
@@ -310,68 +441,127 @@ export default function App() {
         onOpenAdmin={handleOpenAdmin}
       />
 
+      {/* Dedicated Service Detail Page */}
+      {currentRoute.type === 'service' && (
+        <ServiceDetailPage
+          slug={currentRoute.slug}
+          projects={projects}
+          settings={settings}
+          onNavigate={handleNavigate}
+        />
+      )}
+
+      {/* Dedicated Project / Case Study Detail Page */}
+      {currentRoute.type === 'project' && (
+        <ProjectDetailPage
+          slug={currentRoute.slug}
+          projects={projects}
+          settings={settings}
+          onNavigate={handleNavigate}
+        />
+      )}
+
+      {/* Dedicated Services Store & Selling Page */}
+      {currentRoute.type === 'store' && (
+        <ServicesStorePage
+          services={services}
+          settings={settings}
+          onNavigate={handleNavigate}
+          onSelectServiceOrder={handleSelectServiceOrder}
+        />
+      )}
+
+      {/* Custom 404 Page */}
+      {currentRoute.type === '404' && (
+        <NotFoundPage
+          settings={settings}
+          onNavigate={handleNavigate}
+        />
+      )}
+
       {/* Main Single-Page Continuous Narrative Flow */}
-      <main className="relative">
-        {/* Hero Section */}
-        {sections.hero && (
-          <Hero
-            settings={settings}
-            hero={hero}
-            onNavigate={handleNavigate}
-          />
-        )}
+      {currentRoute.type === 'home' && (
+        <main className="relative">
+          {/* Hero Section */}
+          {sections.hero && (
+            <Hero
+              settings={settings}
+              hero={hero}
+              onNavigate={handleNavigate}
+            />
+          )}
 
-        {/* Dynamic Services Section: WHAT I BUILD */}
-        {sections.services && (
-          <ServicesSection
-            services={services}
-            onSelectServiceCTA={() => handleNavigate('contact')}
-          />
-        )}
+          {/* Dynamic Services Section: WHAT I BUILD */}
+          {sections.services && (
+            <ServicesSection
+              services={services}
+              onNavigate={handleNavigate}
+              onSelectServiceCTA={() => handleNavigate('contact')}
+            />
+          )}
 
-        {/* Selected Work Showcase: EDITORIAL CASE STUDIES */}
-        {sections.projects && (
-          <WorkShowcase
-            projects={projects}
-          />
-        )}
+          {/* eCommerce Pricing & Fixed-Scope Packages Store Section */}
+          {sections.services && (
+            <ServiceStoreSection
+              services={services}
+              onNavigate={handleNavigate}
+              onSelectServiceOrder={handleSelectServiceOrder}
+            />
+          )}
 
-        {/* About, Stack & Capabilities: DESIGN × CODE × AI */}
-        {sections.about && (
-          <AboutSection
-            settings={settings}
-            about={about}
-            skills={skills}
-            experience={experience}
-            onNavigate={handleNavigate}
-          />
-        )}
+          {/* Selected Work Showcase: EDITORIAL CASE STUDIES */}
+          {sections.projects && (
+            <WorkShowcase
+              projects={projects}
+              onNavigate={handleNavigate}
+            />
+          )}
 
-        {/* 4-Step Process Section: HOW I WORK */}
-        {sections.process && (
-          <ProcessSection />
-        )}
+          {/* About, Stack & Capabilities: DESIGN × CODE × AI */}
+          {sections.about && (
+            <AboutSection
+              settings={settings}
+              about={about}
+              skills={skills}
+              experience={experience}
+              onNavigate={handleNavigate}
+            />
+          )}
 
-        {/* AI Automation Interactive Workflow Simulator */}
-        {sections.automation && (
-          <AutomationShowcase />
-        )}
+          {/* 4-Step Process Section: HOW I WORK */}
+          {sections.process && (
+            <ProcessSection />
+          )}
 
-        {/* Client Testimonials & Work */}
-        {sections.testimonials && (
-          <TestimonialsSection
-            testimonials={testimonials}
-            onNavigateContact={() => handleNavigate('contact')}
-          />
-        )}
+          {/* AI Automation Interactive Workflow Simulator */}
+          {sections.automation && (
+            <AutomationShowcase />
+          )}
 
-        {/* Contact: LET'S BUILD SOMETHING USEFUL */}
-        {sections.contact && (
-          <ContactSection
-            settings={settings}
-          />
-        )}
-      </main>
+          {/* Client Testimonials & Work */}
+          {sections.testimonials && (
+            <TestimonialsSection
+              testimonials={testimonials}
+              onNavigateContact={() => handleNavigate('contact')}
+            />
+          )}
+
+          {/* FAQ Section */}
+          {(sections.faq ?? true) && (
+            <FAQSection
+              onNavigateContact={() => handleNavigate('contact')}
+            />
+          )}
+
+          {/* Contact: LET'S BUILD SOMETHING USEFUL */}
+          {sections.contact && (
+            <ContactSection
+              settings={settings}
+              preselectedService={selectedServiceForOrder}
+            />
+          )}
+        </main>
+      )}
 
       {/* Footer */}
       {sections.footer && (

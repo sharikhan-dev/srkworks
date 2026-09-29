@@ -22,6 +22,8 @@ export interface Project {
   client?: string;
   metrics?: string;
   challenge?: string;
+  problem_statement?: string;
+  detailed_overview?: string;
   solution?: string;
   created_at?: string;
   updated_at?: string;
@@ -37,6 +39,12 @@ export interface Service {
   features?: string[];
   technologies?: string[];
   starting_price?: string;
+  price?: string;
+  delivery_time?: string;
+  badge?: string;
+  category?: string;
+  image_url?: string;
+  cover_image?: string;
   cta_label?: string;
   link_url?: string;
   display_order: number;
@@ -188,6 +196,7 @@ export interface SectionVisibility {
   process: boolean;
   automation: boolean;
   testimonials: boolean;
+  faq?: boolean;
   contact: boolean;
   footer: boolean;
 }

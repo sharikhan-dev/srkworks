@@ -433,6 +433,9 @@ export const db = {
     const all = getLocalData<Service[]>(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
     const id = service.id || `serv-${Date.now()}`;
     const slug = service.slug || service.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const image = (service.image_url || service.cover_image || '').trim();
+    const price = (service.price || service.starting_price || '').trim();
+
     const fullService: Service = {
       id,
       title: service.title,
@@ -442,8 +445,14 @@ export const db = {
       detailed_description: service.detailed_description || '',
       features: service.features || [],
       technologies: service.technologies || [],
-      starting_price: service.starting_price || '',
-      cta_label: service.cta_label || 'Inquire Service',
+      starting_price: price,
+      price: price,
+      delivery_time: service.delivery_time || '7 - 14 Days',
+      badge: service.badge || '',
+      category: service.category || 'Web Development',
+      image_url: image,
+      cover_image: image,
+      cta_label: service.cta_label || 'Order Service',
       display_order: service.display_order ?? (all.length + 1),
       featured: Boolean(service.featured),
       enabled: service.enabled !== undefined ? service.enabled : true,
@@ -453,7 +462,21 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('services').upsert([fullService]);
+        let sendPayload: Record<string, any> = { ...fullService };
+        let { error: saveError } = await supabase.from('services').upsert([sendPayload], { onConflict: 'id' });
+
+        // Auto-heal if existing Supabase table lacks newer optional columns
+        while (saveError && (saveError.code === 'PGRST204' || saveError.message?.includes('column'))) {
+          const match = saveError.message.match(/Could not find the '([^']+)' column/i);
+          if (match && match[1] && sendPayload[match[1]] !== undefined) {
+            console.warn(`Supabase services table lacks column '${match[1]}'. Auto-retrying without it...`);
+            delete sendPayload[match[1]];
+            const retry = await supabase.from('services').upsert([sendPayload], { onConflict: 'id' });
+            saveError = retry.error;
+          } else {
+            break;
+          }
+        }
       } catch (err) {
         console.warn('Supabase saveService error:', err);
       }

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { User, ArrowRight } from 'lucide-react';
+import { User, ArrowRight, MapPin } from 'lucide-react';
 import { Skill, Experience, SiteSettings, AboutSettings } from '../../types';
 
 interface AboutSectionProps {
@@ -88,7 +88,7 @@ export function AboutSection({ settings, about, skills, experience, onNavigate }
             </p>
 
             {/* Quick Core Capabilities Pills */}
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-6 sm:mb-8">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-5">
               {tags.map((pill, i) => (
                 <span
                   key={i}
@@ -97,6 +97,12 @@ export function AboutSection({ settings, about, skills, experience, onNavigate }
                   {pill}
                 </span>
               ))}
+            </div>
+
+            {/* Truthful Location Indicator for Local SEO */}
+            <div className="flex items-center gap-2 mb-6 sm:mb-8 text-xs text-neutral-400 font-mono">
+              <MapPin className="w-3.5 h-3.5 text-neutral-300 flex-shrink-0" />
+              <span>Based in Delhi, India — partnering with clients across India &amp; worldwide.</span>
             </div>
 
             <button

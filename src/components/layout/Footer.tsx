@@ -69,9 +69,60 @@ export function Footer({ settings, socials, onNavigate, onOpenAdmin }: FooterPro
         </button>
       </div>
 
-      <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between text-[11px] text-neutral-500 font-mono gap-4">
-        <span>© {new Date().getFullYear()} {brandName}. All rights reserved.</span>
-        <span className="hidden sm:inline text-neutral-500">Editorial Liquid Glass Aesthetics</span>
+      {/* Secondary Service & Internal Links Navigation */}
+      <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-white/[0.04] flex flex-wrap items-center justify-between gap-4 text-xs text-neutral-400">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <a
+            href="/services/web-development"
+            onClick={(e) => { e.preventDefault(); onNavigate('services/web-development'); }}
+            className="hover:text-white transition-colors"
+          >
+            Web Development Services
+          </a>
+          <a
+            href="/services/ui-ux-design"
+            onClick={(e) => { e.preventDefault(); onNavigate('services/ui-ux-design'); }}
+            className="hover:text-white transition-colors"
+          >
+            UI/UX Design
+          </a>
+          <a
+            href="/services/ai-solutions"
+            onClick={(e) => { e.preventDefault(); onNavigate('services/ai-solutions'); }}
+            className="hover:text-white transition-colors"
+          >
+            AI Solutions &amp; Automation
+          </a>
+          <a
+            href="/store"
+            onClick={(e) => { e.preventDefault(); onNavigate('store'); }}
+            className="hover:text-white transition-colors text-amber-300/90 font-medium"
+          >
+            Service Store &amp; Pricing
+          </a>
+          <a
+            href="#faq"
+            onClick={(e) => { e.preventDefault(); onNavigate('faq'); }}
+            className="hover:text-white transition-colors"
+          >
+            FAQ
+          </a>
+          <a
+            href="#contact"
+            onClick={(e) => { e.preventDefault(); onNavigate('contact'); }}
+            className="hover:text-white transition-colors"
+          >
+            Contact
+          </a>
+        </div>
+        <p className="text-[11px] font-mono text-neutral-400">
+          Based in Delhi, India — working with clients across India &amp; worldwide.
+        </p>
+      </div>
+
+      <div className="max-w-6xl mx-auto mt-6 pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between text-[11px] text-neutral-400 font-mono gap-4">
+        <span>© {new Date().getFullYear()} SRK Works ({brandName}). All rights reserved.</span>
+        <span className="text-neutral-400">Built with modern web standards, sub-second vitals &amp; accessible UX</span>
       </div>
     </footer>
   );

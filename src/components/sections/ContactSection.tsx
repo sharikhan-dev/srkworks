@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   Send,
@@ -16,24 +16,35 @@ import { db } from '../../services/db';
 
 interface ContactSectionProps {
   settings: SiteSettings;
+  preselectedService?: string;
 }
 
 const SERVICE_OPTIONS = [
-  'UI/UX Design',
   'Web Development',
+  'UI/UX Design',
   'AI Automation',
   'AI-Powered Products',
   'Full Scope Design & Code'
 ];
 
-export function ContactSection({ settings }: ContactSectionProps) {
+export function ContactSection({ settings, preselectedService }: ContactSectionProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [service, setService] = useState(SERVICE_OPTIONS[0]);
+  const [service, setService] = useState(preselectedService || SERVICE_OPTIONS[0]);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Auto-populate when user clicks Order on a specific service package
+  useEffect(() => {
+    if (preselectedService) {
+      setService(preselectedService);
+      setMessage((prev) =>
+        prev ? prev : `Hi Sharik, I would like to order/discuss the "${preselectedService}" package. Let's talk about timeline and requirements.`
+      );
+    }
+  }, [preselectedService]);
 
   const headlineLines = (settings.contact_headline || "LET'S BUILD SOMETHING\nUSEFUL.").split('\n');
 
