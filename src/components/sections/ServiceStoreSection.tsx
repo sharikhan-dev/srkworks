@@ -95,8 +95,17 @@ export function ServiceStoreSection({
         {filteredServices.slice(0, 6).map((service, index) => {
           const price = service.price || service.starting_price || 'Custom Scope';
           const delivery = service.delivery_time || '7 - 14 Days';
-          const img = service.image_url || service.cover_image || '/hero-sculpture.jpg';
           const badge = service.badge;
+          
+          let img = service.image_url || service.cover_image;
+          if (!img || img === '/hero-sculpture.jpg') {
+            const slug = (service.slug || '').toLowerCase();
+            const cat = (service.category || '').toLowerCase();
+            if (slug.includes('web') || cat.includes('web')) img = '/service-webdev.jpg';
+            else if (slug.includes('ui') || slug.includes('ux') || cat.includes('design')) img = '/service-uiux.jpg';
+            else if (slug.includes('ai') || cat.includes('ai')) img = '/og-image.jpg';
+            else img = '/hero-sculpture.jpg';
+          }
 
           return (
             <motion.div

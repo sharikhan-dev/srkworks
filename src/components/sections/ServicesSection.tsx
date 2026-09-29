@@ -88,21 +88,34 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="mb-16 sm:mb-20"
+        className="flex flex-col md:flex-row md:items-end justify-between mb-16 sm:mb-20 gap-6"
       >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-300">
-            Core Expertise
-          </span>
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-300">
+              Core Expertise
+            </span>
+          </div>
+
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
+            WHAT I BUILD
+          </h2>
+          <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
+            Disciplined design and engineering to build digital products, high-velocity websites, and autonomous intelligence systems.
+          </p>
         </div>
 
-        <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
-          WHAT I BUILD
-        </h2>
-        <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
-          Disciplined design and engineering to build digital products, high-velocity websites, and autonomous intelligence systems.
-        </p>
+        {/* Quick jump to packages and pricing */}
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('pricing')}
+            className="self-start md:self-end text-xs font-mono text-neutral-300 hover:text-white glass-pill px-4 py-2 rounded-full border border-white/10 flex items-center gap-1.5 cursor-pointer group"
+          >
+            <span>View Packages &amp; Pricing</span>
+            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </button>
+        )}
       </motion.div>
 
       {/* Editorial Services List — No Generic Boxed Cards */}
@@ -111,6 +124,7 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
           const stepNumber = String(index + 1).padStart(2, '0');
           const isHovered = hoveredIndex === index;
           const targetSlug = service.slug === 'ai-automation' || service.slug === 'ai-powered-products' ? 'ai-solutions' : service.slug;
+          const headingTitle = (service.category || service.title).toUpperCase();
 
           return (
             <motion.div
@@ -142,7 +156,7 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
                       }}
                       className="hover:underline hover:decoration-white/40"
                     >
-                      {service.title}
+                      {headingTitle}
                     </a>
                   </h3>
 

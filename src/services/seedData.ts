@@ -53,8 +53,8 @@ export const INITIAL_SERVICES: Service[] = [
     price: '$1,200',
     starting_price: '$1,200',
     delivery_time: '14 - 21 Days',
-    image_url: '/hero-sculpture.jpg',
-    cover_image: '/hero-sculpture.jpg',
+    image_url: '/service-webdev.jpg',
+    cover_image: '/service-webdev.jpg',
     short_description: 'Fast, responsive, and type-safe modern website engineered with sub-second Core Web Vitals and complete SEO.',
     detailed_description: 'Building modern web platforms with React 19, TypeScript, and Tailwind CSS. We deliver mobile-first experiences, sub-second LCP, zero layout shift, Supabase/database integration, and production deployment on Vercel.',
     features: [
@@ -81,8 +81,8 @@ export const INITIAL_SERVICES: Service[] = [
     price: '$800',
     starting_price: '$800',
     delivery_time: '7 - 14 Days',
-    image_url: '/hero-sculpture.jpg',
-    cover_image: '/hero-sculpture.jpg',
+    image_url: '/service-uiux.jpg',
+    cover_image: '/service-uiux.jpg',
     short_description: 'Human-centric user interfaces, comprehensive design systems, and interactive clickable prototypes in Figma.',
     detailed_description: 'Translating product vision into intuitive digital journeys. We design mathematically structured layout grids, WCAG AA accessible contrast palettes, design tokens, and high-fidelity interactive prototypes.',
     features: [
@@ -109,8 +109,8 @@ export const INITIAL_SERVICES: Service[] = [
     price: '$650',
     starting_price: '$650',
     delivery_time: '5 - 10 Days',
-    image_url: '/hero-sculpture.jpg',
-    cover_image: '/hero-sculpture.jpg',
+    image_url: '/og-image.jpg',
+    cover_image: '/og-image.jpg',
     short_description: 'Bespoke AI chatbots trained on your company data plus automated webhook pipelines connecting your business tools.',
     detailed_description: 'Designing autonomous business systems that eliminate repetitive operational drag. We connect LLMs (Gemini / OpenAI) to your customer chat, CRM, and databases with strict privacy guardrails and telemetry logging.',
     features: [

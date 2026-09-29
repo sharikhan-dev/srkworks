@@ -136,7 +136,7 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
           </button>
 
           {/* Center/Right Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1 bg-white/[0.02] p-1 rounded-full border border-white/[0.05]">
+          <div className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-white/[0.02] p-1 rounded-full border border-white/[0.05] overflow-x-auto max-w-full">
             {activeItems.map((item) => {
               const cleanId = item.url.replace('#', '');
               const isActive = activeSection === cleanId;
@@ -145,7 +145,7 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
                   key={item.id}
                   id={`nav-item-${cleanId}`}
                   onClick={() => handleItemClick(item.url)}
-                  className={`relative px-4 py-1.5 text-xs font-medium rounded-full transition-colors cursor-pointer ${
+                  className={`relative px-2.5 lg:px-3.5 xl:px-4 py-1.5 text-[11px] lg:text-xs font-medium rounded-full transition-colors cursor-pointer shrink-0 ${
                     isActive ? 'text-white font-semibold' : 'text-neutral-400 hover:text-white'
                   }`}
                 >
@@ -156,18 +156,23 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
                       transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                     />
                   )}
-                  <span className="relative z-10">{item.label}</span>
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {cleanId === 'pricing' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    )}
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
           </div>
 
           {/* Right: CTA Button */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             <button
               id="nav-cta-talk"
               onClick={() => handleItemClick(ctaUrl)}
-              className="group flex items-center gap-2 px-5 py-2 text-xs font-semibold text-black bg-white hover:bg-neutral-200 rounded-full transition-all duration-300 shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:shadow-[0_0_35px_rgba(255,255,255,0.35)] active:scale-95 cursor-pointer"
+              className="group flex items-center gap-1.5 lg:gap-2 px-3.5 lg:px-5 py-2 text-[11px] lg:text-xs font-semibold text-black bg-white hover:bg-neutral-200 rounded-full transition-all duration-300 shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:shadow-[0_0_35px_rgba(255,255,255,0.35)] active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <span>{ctaText}</span>
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

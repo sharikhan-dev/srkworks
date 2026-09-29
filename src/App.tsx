@@ -500,15 +500,6 @@ export default function App() {
             />
           )}
 
-          {/* eCommerce Pricing & Fixed-Scope Packages Store Section */}
-          {sections.services && (
-            <ServiceStoreSection
-              services={services}
-              onNavigate={handleNavigate}
-              onSelectServiceOrder={handleSelectServiceOrder}
-            />
-          )}
-
           {/* Selected Work Showcase: EDITORIAL CASE STUDIES */}
           {sections.projects && (
             <WorkShowcase
@@ -531,6 +522,15 @@ export default function App() {
           {/* 4-Step Process Section: HOW I WORK */}
           {sections.process && (
             <ProcessSection />
+          )}
+
+          {/* eCommerce Pricing & Fixed-Scope Packages Store Section */}
+          {sections.services && (
+            <ServiceStoreSection
+              services={services}
+              onNavigate={handleNavigate}
+              onSelectServiceOrder={handleSelectServiceOrder}
+            />
           )}
 
           {/* AI Automation Interactive Workflow Simulator */}
