@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowUpRight } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, Instagram } from 'lucide-react';
 import { SiteSettings, SocialLink } from '../../types';
 
 interface FooterProps {
@@ -13,10 +13,23 @@ export function Footer({ settings, socials, onNavigate, onOpenAdmin }: FooterPro
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const activeSocials =
-    socials && socials.length > 0
-      ? socials.filter((s) => s.enabled)
-      : [];
+  const instagramDefault: SocialLink = {
+    id: 'soc-instagram',
+    platform: 'Instagram',
+    label: 'Instagram',
+    url: 'https://www.instagram.com/imsharikhan/',
+    icon: 'instagram',
+    enabled: true,
+    display_order: 1
+  };
+
+  const filteredSocials = (socials || []).filter((s) => s.enabled);
+  const hasInstagram = filteredSocials.some(
+    (s) => s.url?.toLowerCase().includes('instagram.com/imsharikhan')
+  );
+  const activeSocials = hasInstagram
+    ? filteredSocials
+    : [instagramDefault, ...filteredSocials];
 
   const brandName = settings.name || 'SHARIK KHAN';
   const logoInitial = settings.logo_initial || 'S';
@@ -43,18 +56,25 @@ export function Footer({ settings, socials, onNavigate, onOpenAdmin }: FooterPro
 
         {/* Center: Dynamic CMS Social Links */}
         <div className="flex flex-wrap items-center gap-6 text-xs text-neutral-400 font-medium">
-          {activeSocials.map((social) => (
-            <a
-              key={social.label || (social as any).id}
-              href={social.url}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white transition-colors flex items-center gap-1 group cursor-pointer"
-            >
-              <span>{social.label}</span>
-              <ArrowUpRight className="w-3 h-3 text-neutral-600 group-hover:text-white transition-colors" />
-            </a>
-          ))}
+          {activeSocials.map((social) => {
+            const isInstagram = social.url?.toLowerCase().includes('instagram.com');
+            return (
+              <a
+                key={social.label || (social as any).id}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Visit Sharik Khan on ${social.label || social.platform}`}
+                className="hover:text-white transition-colors flex items-center gap-1.5 group cursor-pointer"
+              >
+                {isInstagram && (
+                  <Instagram className="w-3.5 h-3.5 text-neutral-400 group-hover:text-pink-400 transition-colors" />
+                )}
+                <span>{social.label}</span>
+                <ArrowUpRight className="w-3 h-3 text-neutral-600 group-hover:text-white transition-colors" />
+              </a>
+            );
+          })}
         </div>
 
         {/* Right: Scroll to top */}

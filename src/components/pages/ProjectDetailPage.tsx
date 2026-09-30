@@ -88,12 +88,18 @@ export function ProjectDetailPage({
     "creator": {
       "@type": "Person",
       "name": "Sharik Khan",
-      "url": "https://srkworks.vercel.app/"
+      "url": "https://srkworks.vercel.app/",
+      "sameAs": [
+        "https://www.instagram.com/imsharikhan/"
+      ]
     },
     "publisher": {
       "@type": "Organization",
       "name": "SRK Works",
-      "url": "https://srkworks.vercel.app/"
+      "url": "https://srkworks.vercel.app/",
+      "sameAs": [
+        "https://www.instagram.com/imsharikhan/"
+      ]
     },
     "image": imageUrl || "https://srkworks.vercel.app/og-image.jpg"
   };

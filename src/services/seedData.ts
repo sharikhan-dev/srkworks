@@ -33,6 +33,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   contact_subtext: "Have an idea, product or business that needs a better digital experience?",
   email: "",
   whatsapp: "",
+  instagram: "https://www.instagram.com/imsharikhan/",
   linkedin: "",
   github: "",
   twitter: "",
@@ -165,7 +166,17 @@ export const INITIAL_EXPERIENCE: Experience[] = [];
 
 export const INITIAL_TESTIMONIALS: Testimonial[] = [];
 
-export const INITIAL_SOCIAL_LINKS: SocialLink[] = [];
+export const INITIAL_SOCIAL_LINKS: SocialLink[] = [
+  {
+    id: 'soc-instagram',
+    platform: 'Instagram',
+    label: 'Instagram',
+    url: 'https://www.instagram.com/imsharikhan/',
+    icon: 'instagram',
+    enabled: true,
+    display_order: 1
+  }
+];
 
 
 export const THEME_PRESETS: Record<string, ThemeSettings> = {

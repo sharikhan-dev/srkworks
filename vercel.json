@@ -1,7 +1,21 @@
 {
+  "cleanUrls": false,
+  "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/sitemap",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/((?!assets|.*\\.(?:xml|txt|ico|png|jpg|jpeg|svg|webp|json|js|css|woff2?)).*)",
       "destination": "/index.html"
     }
   ],
@@ -33,6 +47,10 @@
         {
           "key": "Content-Type",
           "value": "text/plain; charset=UTF-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate"
         }
       ]
     },
@@ -42,6 +60,23 @@
         {
           "key": "Content-Type",
           "value": "application/xml; charset=UTF-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=UTF-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate"
         }
       ]
     }

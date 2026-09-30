@@ -317,7 +317,10 @@ export function ServiceDetailPage({
     "provider": {
       "@type": "ProfessionalService",
       "name": "SRK Works",
-      "url": "https://srkworks.vercel.app/"
+      "url": "https://srkworks.vercel.app/",
+      "sameAs": [
+        "https://www.instagram.com/imsharikhan/"
+      ]
     },
     "areaServed": ["Delhi NCR", "India", "Worldwide"],
     "description": service.seoDescription,

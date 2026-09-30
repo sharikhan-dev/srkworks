@@ -109,7 +109,8 @@ export function syncWithSeedData(force = false) {
     if (force || !localStorage.getItem(STORAGE_KEYS.EXPERIENCE)) {
       setLocalData(STORAGE_KEYS.EXPERIENCE, INITIAL_EXPERIENCE);
     }
-    if (force || !localStorage.getItem(STORAGE_KEYS.SOCIALS)) {
+    const currentSocials = getLocalData<SocialLink[]>(STORAGE_KEYS.SOCIALS, []);
+    if (force || !localStorage.getItem(STORAGE_KEYS.SOCIALS) || currentSocials.length === 0) {
       setLocalData(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
     }
     if (force || !localStorage.getItem(STORAGE_KEYS.THEME)) {
@@ -1124,7 +1125,7 @@ export const db = {
       try {
         const { data, error } = await supabase.from('social_links').select('*').order('display_order', { ascending: true });
         if (error) throw error;
-        if (data) {
+        if (data && data.length > 0) {
           setLocalData(STORAGE_KEYS.SOCIALS, data);
           return [...data].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
         }
@@ -1132,7 +1133,17 @@ export const db = {
         console.warn('Supabase getSocialLinks error:', err);
       }
     }
-    const all = getLocalData<SocialLink[]>(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
+    let all = getLocalData<SocialLink[]>(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
+    if (!all || all.length === 0) {
+      all = INITIAL_SOCIAL_LINKS;
+      setLocalData(STORAGE_KEYS.SOCIALS, INITIAL_SOCIAL_LINKS);
+    }
+    const hasInstagram = all.some(
+      (s) => s.url?.toLowerCase().includes('instagram.com/imsharikhan')
+    );
+    if (!hasInstagram) {
+      all = [...INITIAL_SOCIAL_LINKS, ...all];
+    }
     return [...all].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   },
 

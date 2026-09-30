@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Instagram } from 'lucide-react';
 import { NavbarSettings, SiteSettings } from '../../types';
 
 interface NavbarProps {
@@ -230,13 +230,27 @@ export function Navbar({ settings, navbar, activeSection, onNavigate, onOpenAdmi
                 })}
               </div>
 
-              <div className="pt-6 border-t border-white/10 mt-6">
+              <div className="pt-6 border-t border-white/10 mt-6 space-y-4">
                 <button
                   onClick={() => handleItemClick(ctaUrl)}
                   className="w-full py-3.5 text-sm font-bold text-black bg-white rounded-2xl text-center shadow-lg cursor-pointer active:scale-98 transition-transform"
                 >
                   {ctaText}
                 </button>
+
+                <div className="flex items-center justify-center pt-2">
+                  <a
+                    href="https://www.instagram.com/imsharikhan/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Visit Sharik Khan on Instagram @imsharikhan"
+                    className="flex items-center gap-2 text-xs font-mono text-neutral-400 hover:text-white transition-colors py-1.5 px-3 rounded-full glass-pill border border-white/10"
+                  >
+                    <Instagram className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Instagram: @imsharikhan</span>
+                    <ArrowUpRight className="w-3 h-3 text-neutral-500" />
+                  </a>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -557,6 +557,7 @@ export default function App() {
           {sections.contact && (
             <ContactSection
               settings={settings}
+              socials={socials}
               preselectedService={selectedServiceForOrder}
             />
           )}

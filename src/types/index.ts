@@ -220,6 +220,7 @@ export interface SiteSettings {
   contact_subtext: string;
   email: string;
   whatsapp: string;
+  instagram?: string;
   linkedin: string;
   github: string;
   twitter: string;

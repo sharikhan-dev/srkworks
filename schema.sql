@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   contact_subtext TEXT,
   email TEXT DEFAULT 'dev.sharikhan@gmail.com',
   whatsapp TEXT,
+  instagram TEXT DEFAULT 'https://www.instagram.com/imsharikhan/',
   linkedin TEXT,
   github TEXT,
   twitter TEXT,
@@ -53,6 +54,7 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_initial TEXT DEFAULT 'S'
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS short_title TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS location TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_phrases TEXT[];
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS instagram TEXT DEFAULT 'https://www.instagram.com/imsharikhan/';
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS favicon_url TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS social_title TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS social_description TEXT;
@@ -436,6 +438,29 @@ CREATE POLICY "Allow storage update" ON storage.objects
 
 CREATE POLICY "Allow storage delete" ON storage.objects
   FOR DELETE USING (bucket_id IN ('project-images', 'profile-images', 'service-assets', 'testimonial-images'));
+
+
+-- =====================================================================
+-- 8. SOCIAL LINKS TABLE
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS social_links (
+  id TEXT PRIMARY KEY,
+  platform TEXT NOT NULL,
+  label TEXT,
+  url TEXT NOT NULL,
+  icon TEXT,
+  enabled BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 1
+);
+
+ALTER TABLE social_links ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public full access social_links" ON social_links;
+CREATE POLICY "Public full access social_links" ON social_links FOR ALL TO public USING (true) WITH CHECK (true);
+
+-- Idempotent seed for Instagram if social_links is empty
+INSERT INTO social_links (id, platform, label, url, icon, enabled, display_order)
+SELECT 'soc-instagram', 'Instagram', 'Instagram', 'https://www.instagram.com/imsharikhan/', 'instagram', true, 1
+WHERE NOT EXISTS (SELECT 1 FROM social_links WHERE url LIKE '%instagram.com/imsharikhan%');
 
 
 -- =====================================================================
