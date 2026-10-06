@@ -667,7 +667,7 @@ export const db = {
     return getLocalData<ContactMessage[]>(STORAGE_KEYS.MESSAGES, []);
   },
 
-  async submitContactMessage(message: Omit<ContactMessage, 'id' | 'status' | 'created_at'>): Promise<ContactMessage> {
+  async submitContactMessage(message: Omit<ContactMessage, 'id' | 'status' | 'created_at' | 'notification_sent_at'>): Promise<ContactMessage> {
     const id = `msg-${Date.now()}`;
     const fullMessage: ContactMessage = {
       ...message,
@@ -678,7 +678,36 @@ export const db = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('contact_messages').insert([fullMessage]);
+        const { error: insertErr } = await supabase.from('contact_messages').insert([fullMessage]);
+        if (insertErr) {
+          console.warn('Supabase submitContactMessage insert warning:', insertErr);
+        } else {
+          // Trigger backend Web Push notification process asynchronously.
+          // Tries 'admin-notification' (as shown in dashboard) with fallback to 'send-admin-push'
+          const invokeFunction = async () => {
+            const res = await supabase.functions.invoke('admin-notification', {
+              body: { record: fullMessage }
+            });
+            if (res.error) {
+              return await supabase.functions.invoke('send-admin-push', {
+                body: { record: fullMessage }
+              });
+            }
+            return res;
+          };
+
+          invokeFunction()
+            .then(({ data, error: fnErr }) => {
+              if (fnErr) {
+                console.warn('Backend push notification dispatch warning:', fnErr);
+              } else if (data) {
+                console.log('Backend push notification result:', data);
+              }
+            })
+            .catch((pushErr) => {
+              console.warn('Backend push notification trigger exception:', pushErr);
+            });
+        }
       } catch (err) {
         console.warn('Supabase submitContactMessage error:', err);
       }

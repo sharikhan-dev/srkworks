@@ -57,6 +57,7 @@ import { AboutManager } from './AboutManager';
 import { SectionsManager } from './SectionsManager';
 import { SocialLinksManager } from './SocialLinksManager';
 import { TestimonialsManager } from './TestimonialsManager';
+import { AdminNotificationToggle } from './AdminNotificationToggle';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -77,8 +78,63 @@ type AdminTab =
   | 'sections'
   | 'messages';
 
+function parseAdminUrlParams(): { tab: AdminTab | null; messageId: string | null } {
+  try {
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+
+    let tabParam: string | null = null;
+    let messageIdParam: string | null = null;
+
+    if (hash.includes('?')) {
+      const hashParams = new URLSearchParams(hash.substring(hash.indexOf('?')));
+      tabParam = hashParams.get('tab');
+      messageIdParam = hashParams.get('messageId');
+    }
+
+    if (!tabParam && search) {
+      const searchParams = new URLSearchParams(search);
+      tabParam = searchParams.get('tab');
+      messageIdParam = messageIdParam || searchParams.get('messageId');
+    }
+
+    const validTabs: AdminTab[] = [
+      'dashboard', 'settings', 'theme', 'hero', 'navbar',
+      'services', 'projects', 'testimonials', 'about', 'socials',
+      'sections', 'messages'
+    ];
+
+    const tab = tabParam && validTabs.includes(tabParam as AdminTab)
+      ? (tabParam as AdminTab)
+      : null;
+
+    return { tab, messageId: messageIdParam };
+  } catch {
+    return { tab: null, messageId: null };
+  }
+}
+
 export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const initialParams = parseAdminUrlParams();
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialParams.tab || 'dashboard');
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(initialParams.messageId);
+
+  // Listen for hashchange to handle background notification clicks while dashboard is already open
+  useEffect(() => {
+    const handleHashChange = () => {
+      const params = parseAdminUrlParams();
+      if (params.tab) {
+        setActiveTab(params.tab);
+      }
+      if (params.messageId) {
+        setSelectedMessageId(params.messageId);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -179,6 +235,8 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <AdminNotificationToggle compact />
+
           <button
             onClick={onClose}
             className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs text-white border border-white/10 transition-colors cursor-pointer"
@@ -323,6 +381,8 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
           </div>
 
           <div className="flex items-center gap-3">
+            <AdminNotificationToggle />
+
             <span
               className={`text-[11px] font-mono flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
                 isSupabaseConfigured()
@@ -550,7 +610,7 @@ export function AdminDashboard({ onClose, onSignOut }: AdminDashboardProps) {
 
               {/* TAB 11: INQUIRIES & MESSAGES */}
               {activeTab === 'messages' && (
-                <MessagesManager />
+                <MessagesManager initialSelectedId={selectedMessageId} />
               )}
             </>
           )}

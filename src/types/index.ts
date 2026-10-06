@@ -101,6 +101,7 @@ export interface ContactMessage {
   message: string;
   status: 'new' | 'contacted' | 'completed' | 'archived';
   created_at: string;
+  notification_sent_at?: string;
 }
 
 // -------------------------------------------------------------

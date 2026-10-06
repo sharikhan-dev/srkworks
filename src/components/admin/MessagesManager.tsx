@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { Mail, Calendar, DollarSign, Tag, Trash2, CheckCircle2, Clock, Archive } from 'lucide-react';
 import { ContactMessage } from '../../types';
 import { db } from '../../services/db';
+import { AdminNotificationToggle } from './AdminNotificationToggle';
 
-export function MessagesManager() {
+interface MessagesManagerProps {
+  initialSelectedId?: string | null;
+}
+
+export function MessagesManager({ initialSelectedId }: MessagesManagerProps = {}) {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
@@ -11,6 +16,16 @@ export function MessagesManager() {
   const loadMessages = async () => {
     const data = await db.getContactMessages();
     setMessages(data);
+
+    if (initialSelectedId) {
+      const match = data.find((m) => m.id === initialSelectedId);
+      if (match) {
+        setSelectedMessage(match);
+        setFilter('all');
+        return;
+      }
+    }
+
     if (!selectedMessage && data.length > 0) {
       setSelectedMessage(data[0]);
     }
@@ -18,7 +33,7 @@ export function MessagesManager() {
 
   useEffect(() => {
     loadMessages();
-  }, []);
+  }, [initialSelectedId]);
 
   const handleStatusChange = async (id: string, status: ContactMessage['status']) => {
     await db.updateContactMessageStatus(id, status);
@@ -64,21 +79,25 @@ export function MessagesManager() {
           </p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl glass-surface self-start sm:self-auto">
-          {['all', 'new', 'contacted', 'completed', 'archived'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1 rounded-lg text-xs capitalize transition-colors ${
-                filter === f
-                  ? 'bg-white text-black font-semibold'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+        {/* Toolbar & Filters */}
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+          <AdminNotificationToggle compact />
+          
+          <div className="flex items-center gap-1.5 p-1 rounded-xl glass-surface">
+            {['all', 'new', 'contacted', 'completed', 'archived'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1 rounded-lg text-xs capitalize transition-colors ${
+                  filter === f
+                    ? 'bg-white text-black font-semibold'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
