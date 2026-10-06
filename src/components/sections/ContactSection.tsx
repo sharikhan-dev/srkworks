@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Send,
   CheckCircle2,
@@ -10,7 +10,8 @@ import {
   Instagram,
   ArrowUpRight,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { SiteSettings, SocialLink } from '../../types';
 import { db } from '../../services/db';
@@ -29,13 +30,14 @@ const SERVICE_OPTIONS = [
   'Full Scope Design & Code'
 ];
 
-export function ContactSection({ settings, preselectedService }: ContactSectionProps) {
+export function ContactSection({ settings, preselectedService, socials }: ContactSectionProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [service, setService] = useState(preselectedService || SERVICE_OPTIONS[0]);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   // Auto-populate when user clicks Order on a specific service package
@@ -47,6 +49,12 @@ export function ContactSection({ settings, preselectedService }: ContactSectionP
       );
     }
   }, [preselectedService]);
+
+  const instagramUrl = settings.instagram || 'https://www.instagram.com/imsharikhan/';
+  const whatsappNumber = settings.whatsapp ? settings.whatsapp.replace(/[^0-9]/g, '') : '';
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi Sharik, I just submitted a project inquiry on your website!')}`
+    : socials?.find((s) => s.platform.toLowerCase().includes('whatsapp'))?.url || null;
 
   const headlineLines = (settings.contact_headline || "LET'S BUILD SOMETHING\nUSEFUL.").split('\n');
 
@@ -68,6 +76,7 @@ export function ContactSection({ settings, preselectedService }: ContactSectionP
         message: message.trim()
       });
       setSubmitted(true);
+      setShowPopup(true);
       setName('');
       setEmail('');
       setMessage('');
@@ -189,19 +198,68 @@ export function ContactSection({ settings, preselectedService }: ContactSectionP
                 animate={{ opacity: 1, scale: 1 }}
                 className="p-6 sm:p-8 rounded-2xl bg-white/[0.04] border border-white/15 text-center my-6"
               >
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 text-emerald-400">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4 text-emerald-400">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-white mb-2">Message Received</h4>
-                <p className="text-xs sm:text-sm text-neutral-300 mb-6">
-                  Thank you for reaching out. I'll review your project details and get back to you shortly.
+                <h4 className="text-base sm:text-lg font-bold text-white mb-2">Query Sent to Our Team</h4>
+                <p className="text-xs sm:text-sm text-neutral-300 mb-5 leading-relaxed">
+                  Thank you! Your query has been sent to our team. We will review your project requirements and contact you shortly.
                 </p>
-                <button
-                  onClick={() => setSubmitted(false)}
-                  className="px-5 py-2 text-xs font-semibold text-black bg-white rounded-full hover:bg-neutral-200 transition-colors cursor-pointer"
-                >
-                  Send Another Note
-                </button>
+
+                {/* Fast-reply channels */}
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] border border-white/10 mb-6 text-left">
+                  <div className="flex items-center gap-1.5 mb-1.5 text-[11px] font-mono uppercase tracking-wider text-amber-300 font-semibold">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>For a Faster Reply:</span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 mb-3">
+                    Reach out directly on Instagram or WhatsApp for immediate response:
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <a
+                      href={instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border border-pink-500/25 text-xs font-semibold transition-all group cursor-pointer"
+                    >
+                      <Instagram className="w-3.5 h-3.5 text-pink-400 group-hover:scale-110 transition-transform" />
+                      <span>Instagram</span>
+                      <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </a>
+
+                    {whatsappUrl && (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 text-xs font-semibold transition-all group cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                        <span>WhatsApp</span>
+                        <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setShowPopup(true)}
+                    className="px-4 py-2 text-xs font-semibold text-neutral-300 bg-white/10 hover:bg-white/15 rounded-full transition-colors cursor-pointer"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSubmitted(false);
+                      setShowPopup(false);
+                    }}
+                    className="px-5 py-2 text-xs font-semibold text-black bg-white rounded-full hover:bg-neutral-200 transition-colors cursor-pointer"
+                  >
+                    Send Another Note
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
@@ -293,6 +351,92 @@ export function ContactSection({ settings, preselectedService }: ContactSectionP
         </div>
 
       </div>
+
+      {/* POPUP MODAL: INQUIRY SENT CONFIRMATION & FAST REPLY CHANNELS */}
+      <AnimatePresence>
+        {showPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-[#0e1017]/95 border border-white/15 shadow-[0_0_60px_rgba(0,0,0,0.9)] text-center overflow-hidden"
+            >
+              {/* Background ambient lighting */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowPopup(false)}
+                className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Close popup"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Icon */}
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto mb-4 text-emerald-400 shadow-lg">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+
+              {/* Headline */}
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
+                Query Sent to Our Team!
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed mb-6">
+                Your query has been sent to our team. We will review your project details and contact you shortly.
+              </p>
+
+              {/* Fast-reply channels */}
+              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 mb-6 text-left">
+                <div className="flex items-center gap-1.5 mb-1.5 text-xs font-mono uppercase tracking-wider text-amber-300 font-semibold">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>For a Fast Reply:</span>
+                </div>
+                <p className="text-xs text-neutral-400 mb-3.5">
+                  Need immediate response? Reach out directly via Instagram or WhatsApp:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border border-pink-500/25 text-xs font-semibold transition-all group cursor-pointer"
+                  >
+                    <Instagram className="w-4 h-4 text-pink-400 group-hover:scale-110 transition-transform" />
+                    <span>Instagram</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </a>
+
+                  {whatsappUrl && (
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 text-xs font-semibold transition-all group cursor-pointer"
+                    >
+                      <MessageSquare className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                      <span>WhatsApp</span>
+                      <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowPopup(false);
+                  setSubmitted(false);
+                }}
+                className="w-full py-3 px-6 rounded-full text-xs sm:text-sm font-semibold text-black bg-white hover:bg-neutral-200 transition-colors cursor-pointer shadow-lg active:scale-[0.99]"
+              >
+                Send Another Message
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
