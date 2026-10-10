@@ -118,8 +118,8 @@ export interface ThemeSettings {
   text_color: string;
   secondary_text_color: string;
   border_color: string;
-  heading_font: 'Plus Jakarta Sans' | 'Inter' | 'Manrope' | 'DM Sans' | 'Space Grotesk';
-  body_font: 'Plus Jakarta Sans' | 'Inter' | 'Manrope' | 'DM Sans';
+  heading_font: 'Sora' | 'Plus Jakarta Sans' | 'Inter' | 'Manrope' | 'DM Sans' | 'Space Grotesk';
+  body_font: 'Sora' | 'Plus Jakarta Sans' | 'Inter' | 'Manrope' | 'DM Sans';
   font_weight: 'font-normal' | 'font-medium' | 'font-semibold' | 'font-bold' | 'font-extrabold';
   heading_scale: 'normal' | 'large' | 'compact';
   border_radius: 'rounded-none' | 'rounded-lg' | 'rounded-2xl' | 'rounded-3xl' | 'rounded-full';

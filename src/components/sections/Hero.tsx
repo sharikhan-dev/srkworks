@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { ArrowDown, ArrowUpRight, Layout, Code2, Cpu, Bot } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { ArrowUpRight } from 'lucide-react';
 import { HeroSettings, SiteSettings } from '../../types';
 
 interface HeroProps {
@@ -9,62 +9,81 @@ interface HeroProps {
   onNavigate: (sectionId: string) => void;
 }
 
-const DEFAULT_HERO_PHRASES = [
-  'UI/UX EXPERIENCES',
-  'WEBSITES',
-  'AI AUTOMATIONS',
-  'AI SOLUTIONS',
-  'DIGITAL EXPERIENCES'
+const DEFAULT_TYPING_PHRASES = [
+  'Experiences',
+  'Websites',
+  'UI/UX Design',
+  'AI Solutions',
+  'Automations'
 ];
 
 export function Hero({ settings, hero, onNavigate }: HeroProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  // Extract phrases from HeroSettings (filter enabled) or fallback to settings/defaults
-  const phrases =
-    hero?.phrases && hero.phrases.length > 0
-      ? hero.phrases.filter((p) => p.enabled).map((p) => p.text)
-      : settings.hero_phrases && settings.hero_phrases.length > 0
-      ? settings.hero_phrases
-      : DEFAULT_HERO_PHRASES;
+  // Extract phrases from database (HeroSettings) or fallback
+  const phrases = useMemo(() => {
+    const fromHero = hero?.phrases && hero.phrases.length > 0
+      ? hero.phrases.filter((p) => p.enabled).map((p) => p.text.trim())
+      : null;
 
-  const eyebrow = hero?.eyebrow || settings.title_badge || "HEY, I'M SHARIK";
-  const headline = hero?.headline || settings.headline || "I CREATE";
+    const fromSettings = settings.hero_phrases && settings.hero_phrases.length > 0
+      ? settings.hero_phrases.map((p) => p.trim())
+      : null;
+
+    return fromHero || fromSettings || DEFAULT_TYPING_PHRASES;
+  }, [hero?.phrases, settings.hero_phrases]);
+
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [currentText, setCurrentText] = useState(phrases[0] || 'Experiences');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Smooth typing and deleting animation effect
+  useEffect(() => {
+    if (prefersReducedMotion || phrases.length === 0) {
+      setCurrentText(phrases[phraseIndex] || 'Experiences');
+      return;
+    }
+
+    const targetPhrase = phrases[phraseIndex] || 'Experiences';
+    const typingSpeed = isDeleting ? 45 : 85;
+    const pauseAtEnd = 2200;
+    const pauseBeforeNext = 300;
+
+    let timer: NodeJS.Timeout;
+
+    if (!isDeleting && currentText === targetPhrase) {
+      // Completed typing the phrase, hold before deleting
+      timer = setTimeout(() => {
+        setIsDeleting(true);
+      }, pauseAtEnd);
+    } else if (isDeleting && currentText === '') {
+      // Completed deleting, move to next phrase
+      timer = setTimeout(() => {
+        setIsDeleting(false);
+        setPhraseIndex((prev) => (prev + 1) % phrases.length);
+      }, pauseBeforeNext);
+    } else {
+      // Actively typing or deleting
+      timer = setTimeout(() => {
+        const next = isDeleting
+          ? targetPhrase.slice(0, currentText.length - 1)
+          : targetPhrase.slice(0, currentText.length + 1);
+        setCurrentText(next);
+      }, typingSpeed);
+    }
+
+    return () => clearTimeout(timer);
+  }, [currentText, isDeleting, phraseIndex, phrases, prefersReducedMotion]);
+
   const supportingText =
     hero?.supporting_text ||
     settings.hero_supporting_text ||
-    'Designing digital experiences, building modern websites, and creating AI-powered systems for the next generation of businesses.';
-  const primaryCtaText = hero?.primary_cta_label || settings.primary_cta_label || 'View My Work';
+    "Hi, I'm Sharikhan — a designer and developer passionate about creating modern websites, intuitive user interfaces, and innovative digital experiences. I combine creativity, technology, and AI to turn ideas into meaningful digital solutions.";
+
+  const primaryCtaText = hero?.primary_cta_label || settings.primary_cta_label || 'View My Work ↗';
   const primaryCtaUrl = hero?.primary_cta_url || '#work';
-  const secondaryCtaText = hero?.secondary_cta_label || settings.secondary_cta_label || "Let's Work Together";
+  const secondaryCtaText = hero?.secondary_cta_label || settings.secondary_cta_label || "Let's connect";
   const secondaryCtaUrl = hero?.secondary_cta_url || '#contact';
-  const heroVisual = hero?.hero_image || settings.profile_image || '/hero-sculpture.jpg';
-
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const heroCardRef = useRef<HTMLDivElement>(null);
-
-  // Auto-rotate phrases every 2.8 seconds
-  useEffect(() => {
-    if (prefersReducedMotion || phrases.length <= 1) return;
-    const interval = setInterval(() => {
-      setPhraseIndex((prev) => (prev + 1) % phrases.length);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, [phrases.length, prefersReducedMotion]);
-
-  // Subtle cursor parallax effect inside hero container
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (prefersReducedMotion || !heroCardRef.current) return;
-    const rect = heroCardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMousePos({ x: x * 20, y: y * 20 });
-  };
-
-  const handleMouseLeave = () => {
-    setMousePos({ x: 0, y: 0 });
-  };
 
   const handleCtaClick = (target: string) => {
     if (target.startsWith('#')) {
@@ -79,215 +98,119 @@ export function Hero({ settings, hero, onNavigate }: HeroProps) {
   return (
     <section
       id="hero"
-      className="relative px-3 sm:px-6 lg:px-8 pt-24 pb-12 max-w-7xl mx-auto overflow-hidden"
+      className="relative min-h-[88vh] pt-36 sm:pt-44 lg:pt-48 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto flex flex-col justify-center items-center overflow-hidden"
     >
-      {/* Large Rounded Hero Container */}
-      <div
-        ref={heroCardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        className="hero-glass-container specular-border-top relative rounded-3xl sm:rounded-[3rem] overflow-hidden p-5 sm:p-12 md:p-16 min-h-[78vh] sm:min-h-[82vh] md:min-h-[86vh] flex flex-col justify-between border border-white/[0.12] transition-shadow duration-700 hover:shadow-[0_40px_90px_-20px_rgba(0,0,0,0.85)]"
-      >
-        {/* Ambient Backlight Glows */}
-        <div className="absolute -top-24 -right-24 w-[350px] sm:w-[650px] h-[350px] sm:h-[650px] bg-gradient-to-br from-white/[0.06] via-neutral-400/[0.03] to-transparent rounded-full blur-[100px] sm:blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute -bottom-32 -left-24 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/[0.03] rounded-full blur-[90px] sm:blur-[100px] pointer-events-none -z-10" />
+      {/* Delicate Architectural Background Grid & Ambient Glow */}
+      <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-40 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] -z-10" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[550px] sm:w-[800px] h-[300px] bg-gradient-to-r from-blue-100/40 via-indigo-50/30 to-sky-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
 
-        {/* Integrated 3D Glass Sculpture with cursor parallax */}
-        <motion.div
-          style={{
-            transform: prefersReducedMotion
-              ? 'none'
-              : `translate3d(${mousePos.x * -0.8}px, ${mousePos.y * -0.8}px, 0)`
-          }}
-          transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-          className="absolute right-[-15%] sm:right-[-4%] md:right-[2%] top-[20%] sm:top-[14%] md:top-[8%] w-[260px] sm:w-[420px] md:w-[620px] lg:w-[680px] aspect-square pointer-events-none select-none -z-0 opacity-30 sm:opacity-55 md:opacity-75 transition-opacity duration-700"
+      {/* Decorative Corner Registration Markers */}
+      <span className="hidden lg:block absolute top-32 left-8 text-neutral-300 font-mono text-sm select-none pointer-events-none">+</span>
+      <span className="hidden lg:block absolute top-32 right-8 text-neutral-300 font-mono text-sm select-none pointer-events-none">+</span>
+      <span className="hidden lg:block absolute bottom-10 left-8 text-neutral-300 font-mono text-sm select-none pointer-events-none">+</span>
+      <span className="hidden lg:block absolute bottom-10 right-8 text-neutral-300 font-mono text-sm select-none pointer-events-none">+</span>
+
+      {/* Main Hero Center Content (scaled down by ~20%) */}
+      <div className="relative z-20 max-w-3xl mx-auto flex flex-col items-center text-center mt-4 sm:mt-8 lg:mt-10">
+        {/* Main Headline (Sora, scaled down by 20%: 60px desktop) */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="font-sora text-[28px] sm:text-[46px] md:text-[56px] lg:text-[60px] font-bold tracking-[-0.03em] leading-[1.07] sm:leading-[1.08] select-none text-neutral-950 flex flex-col items-center"
         >
-          <div className="relative w-full h-full">
-            <img
-              src={heroVisual}
-              alt="SRK Works Digital Studio 3D Liquid Frosted Glass Sculpture"
-              fetchPriority="high"
-              decoding="async"
-              className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] mix-blend-screen"
+          {/* Permanent Top Line */}
+          <span className="block text-neutral-950">Let’s Build Digital</span>
+
+          {/* Dynamic Typed Middle Line */}
+          <span className="inline-flex items-center justify-center py-0.5 min-h-[1.12em]">
+            <span className="hero-experiences-gradient">
+              {currentText}
+            </span>
+            {/* Blinking Typing Cursor */}
+            <span
+              className="inline-block w-[2.5px] sm:w-[3.5px] lg:w-[4px] h-[0.8em] ml-1 sm:ml-1.5 bg-blue-600 rounded-full animate-[pulse_0.9s_ease-in-out_infinite] align-middle shadow-[0_0_8px_rgba(37,99,235,0.45)]"
+              aria-hidden="true"
             />
-            {/* Subtle atmospheric gradient over the visual */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0d0f14] via-[#0d0f14]/40 to-transparent pointer-events-none" />
-          </div>
-        </motion.div>
-
-        {/* Floating Availability Badge */}
-        <motion.div
-          style={{
-            transform: prefersReducedMotion
-              ? 'none'
-              : `translate3d(${mousePos.x * 0.6}px, ${mousePos.y * 0.6}px, 0)`
-          }}
-          className="hidden lg:flex absolute right-12 top-16 items-center gap-2.5 glass-pill px-4 py-2 rounded-full pointer-events-none border border-white/10"
-        >
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-mono tracking-tight text-neutral-300">
-            {settings.availability_status || 'Available for selected projects'}
           </span>
+
+          {/* Permanent Bottom Line */}
+          <span className="block text-neutral-950">For Every Vision.</span>
+        </motion.h1>
+
+        {/* Supporting Paragraph */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="font-inter text-xs sm:text-[14.5px] md:text-[15px] text-neutral-600 leading-relaxed sm:leading-relaxed max-w-xl sm:max-w-2xl mt-5 sm:mt-6 px-2 text-balance font-normal"
+        >
+          {supportingText}
+        </motion.p>
+
+        {/* Action CTAs */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3.5 mt-7 sm:mt-8 w-full sm:w-auto"
+        >
+          {/* Primary CTA */}
+          <button
+            id="hero-primary-cta"
+            onClick={() => handleCtaClick(primaryCtaUrl)}
+            className="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 rounded-full bg-neutral-950 text-white font-inter text-xs sm:text-[13px] font-semibold hover:bg-neutral-800 transition-all duration-200 shadow-sm active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
+          >
+            <span>{primaryCtaText}</span>
+            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </button>
+
+          {/* Secondary CTA */}
+          <button
+            id="hero-secondary-cta"
+            onClick={() => handleCtaClick(secondaryCtaUrl)}
+            className="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 rounded-full bg-white text-neutral-900 border border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 font-inter text-xs sm:text-[13px] font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+          >
+            <span>{secondaryCtaText}</span>
+          </button>
         </motion.div>
 
-        {/* Hero Content Area */}
-        <div className="relative z-10 max-w-2xl pt-2 sm:pt-4">
-          {/* Eyebrow */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full glass-pill mb-4 sm:mb-8 border border-white/10"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-            </span>
-            <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.16em] sm:tracking-[0.2em] text-neutral-300 font-medium">
-              {eyebrow}
-            </span>
-          </motion.div>
-
-          {/* Headline + Dynamic Word Carousel */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-5 sm:mb-6 select-none"
-          >
-            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[5.2rem] font-semibold tracking-[-0.03em] text-white leading-[1.08]">
-              <span className="block text-white/90 font-medium">
-                {headline}
-              </span>
-
-              {/* Accessible complete value proposition for crawlers & assistive tech */}
-              <span className="sr-only">
-                Websites, Interfaces &amp; AI-Powered Digital Experiences — SRK Works Web Development, UI/UX Design &amp; AI Solutions
-              </span>
-
-              {/* Dynamic Animated Word Carousel */}
-              <div className="h-[1.25em] min-h-[38px] sm:min-h-[56px] md:min-h-[72px] relative overflow-hidden mt-1">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={phraseIndex}
-                    initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -18 }}
-                    transition={{
-                      duration: 0.45,
-                      ease: [0.16, 1, 0.3, 1]
-                    }}
-                    className="block absolute inset-0 bg-gradient-to-r from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent font-semibold tracking-[-0.03em] drop-shadow-sm truncate"
-                  >
-                    {phrases[phraseIndex]}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-            </h1>
-          </motion.div>
-
-          {/* Supporting Description */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="text-sm sm:text-lg md:text-xl text-neutral-300/90 font-light sm:font-normal leading-relaxed mb-6 sm:mb-10 max-w-xl text-balance"
-          >
-            {supportingText}
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto"
-          >
-            <button
-              id="hero-primary-cta"
-              onClick={() => handleCtaClick(primaryCtaUrl)}
-              className="px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-black bg-white hover:bg-neutral-200 rounded-full transition-all duration-300 shadow-[0_0_35px_rgba(255,255,255,0.25)] hover:shadow-[0_0_45px_rgba(255,255,255,0.4)] active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
-            >
-              <span>{primaryCtaText}</span>
-              <ArrowDown className="w-4 h-4 text-black transition-transform group-hover:translate-y-0.5" />
-            </button>
-
-            <button
-              id="hero-secondary-cta"
-              onClick={() => handleCtaClick(secondaryCtaUrl)}
-              className="px-6 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-medium text-neutral-200 hover:text-white glass-pill hover:bg-white/10 rounded-full transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 border border-white/15 cursor-pointer"
-            >
-              <span>{secondaryCtaText}</span>
-              <ArrowUpRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </button>
-          </motion.div>
-        </div>
-
-        {/* Lower Tier Service Pillars */}
+        {/* Minimalist Apple-Style Mouse Scroll Indicator */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-white/[0.08] grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6"
+          onClick={() => onNavigate('about')}
+          className="mt-11 sm:mt-13 flex flex-col items-center gap-1.5 cursor-pointer group select-none"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigate('about');
+            }
+          }}
+          aria-label="Scroll to next section"
         >
-          <div
-            onClick={() => onNavigate('services')}
-            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">01 / CRAFT</span>
-              <Layout className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <span className="text-xs sm:text-base font-semibold text-white block truncate">UI/UX Design</span>
-              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">Design Systems & Figma</span>
-            </div>
+          <div className="w-[19px] h-[31px] rounded-full border-[1.5px] border-neutral-400/80 group-hover:border-neutral-900 transition-colors duration-200 flex items-start justify-center p-1 shadow-2xs">
+            <motion.div
+              animate={prefersReducedMotion ? {} : {
+                y: [0, 7, 0],
+                opacity: [1, 0.3, 1]
+              }}
+              transition={{
+                duration: 1.8,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+              className="w-1 h-1.5 rounded-full bg-neutral-700 group-hover:bg-neutral-950 transition-colors"
+            />
           </div>
-
-          <div
-            onClick={() => onNavigate('services')}
-            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">02 / CODE</span>
-              <Code2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <span className="text-xs sm:text-base font-semibold text-white block truncate">Web Development</span>
-              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">React, Next.js, Motion</span>
-            </div>
-          </div>
-
-          <div
-            onClick={() => onNavigate('services')}
-            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">03 / FLOW</span>
-              <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <span className="text-xs sm:text-base font-semibold text-white block truncate">AI Automation</span>
-              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">Pipelines & Workflows</span>
-            </div>
-          </div>
-
-          <div
-            onClick={() => onNavigate('services')}
-            className="group p-3 sm:p-5 rounded-xl sm:rounded-2xl glass-surface glass-surface-hover cursor-pointer border border-white/[0.08] flex flex-col justify-between space-y-2 sm:space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-neutral-400">04 / INTEL</span>
-              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <span className="text-xs sm:text-base font-semibold text-white block truncate">AI Solutions</span>
-              <span className="text-[10px] sm:text-xs text-neutral-400 mt-0.5 block truncate">Chatbots & LLM Tools</span>
-            </div>
-          </div>
+          <span className="text-[9px] font-inter uppercase tracking-[0.16em] text-neutral-400 group-hover:text-neutral-700 transition-colors font-medium">
+            Scroll
+          </span>
         </motion.div>
       </div>
-
     </section>
   );
 }

@@ -27,9 +27,9 @@ export function WorkShowcase({ projects, onNavigate }: WorkShowcaseProps) {
   }, [projects, selectedCategory]);
 
   return (
-    <section id="work" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
-      {/* Background Soft Glow */}
-      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-white/[0.015] rounded-full blur-[140px] pointer-events-none -z-10" />
+    <section id="work" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
+      {/* Background Subtle Ambient Glow */}
+      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-100/30 rounded-full blur-[140px] pointer-events-none -z-10" />
 
       {/* Section Header */}
       <motion.div
@@ -37,36 +37,36 @@ export function WorkShowcase({ projects, onNavigate }: WorkShowcaseProps) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 gap-6"
+        className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-14 gap-6"
       >
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
-            <Layers className="w-3.5 h-3.5 text-neutral-300" />
-            <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-neutral-300">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 mb-3 sm:mb-4 border border-neutral-200/80 shadow-2xs">
+            <Layers className="w-3.5 h-3.5 text-neutral-700" />
+            <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-neutral-700 font-medium">
               Selected Work
             </span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
-            EDITORIAL CASE STUDIES
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-neutral-950 uppercase font-sora">
+            Featured Projects
           </h2>
-          <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
-            High-craft visual design systems, resilient web engineering, and autonomous AI architectures deployed in production.
+          <p className="text-neutral-600 text-xs sm:text-base max-w-xl mt-2.5 sm:mt-3 leading-relaxed font-inter">
+            Thoughtfully crafted visual design systems, resilient web engineering, and intelligent digital products.
           </p>
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl glass-surface border border-white/10 max-w-full overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#ECEEF2] border border-neutral-200/60 max-w-full overflow-x-auto scrollbar-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 sm:px-3.5 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-1.5 text-xs font-inter font-medium rounded-full whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-black font-semibold shadow-sm'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-neutral-950 text-white font-semibold shadow-xs'
+                    : 'text-neutral-600 hover:text-neutral-900 hover:bg-white/60'
                 }`}
               >
                 {cat}

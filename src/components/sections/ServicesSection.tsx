@@ -91,17 +91,17 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
         className="flex flex-col md:flex-row md:items-end justify-between mb-16 sm:mb-20 gap-6"
       >
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill mb-3 sm:mb-4 border border-white/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-300">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 mb-3 sm:mb-4 border border-neutral-200/80 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 animate-pulse" />
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-700 font-medium">
               Core Expertise
             </span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white uppercase font-sans">
-            WHAT I BUILD
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-neutral-950 uppercase font-sora">
+            What I Build
           </h2>
-          <p className="text-neutral-400 text-xs sm:text-base max-w-xl mt-3 sm:mt-4 leading-relaxed">
+          <p className="text-neutral-600 text-xs sm:text-base max-w-xl mt-2.5 sm:mt-3 leading-relaxed font-inter">
             Disciplined design and engineering to build digital products, high-velocity websites, and autonomous intelligence systems.
           </p>
         </div>
@@ -110,7 +110,7 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
         {onNavigate && (
           <button
             onClick={() => onNavigate('pricing')}
-            className="self-start md:self-end text-xs font-mono text-neutral-300 hover:text-white glass-pill px-4 py-2 rounded-full border border-white/10 flex items-center gap-1.5 cursor-pointer group"
+            className="self-start md:self-end text-xs font-inter font-medium text-neutral-700 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200 px-4 py-2 rounded-full border border-neutral-200 flex items-center gap-1.5 cursor-pointer group transition-colors shadow-2xs"
           >
             <span>View Packages &amp; Pricing</span>
             <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -118,13 +118,13 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
         )}
       </motion.div>
 
-      {/* Editorial Services List — No Generic Boxed Cards */}
-      <div className="border-t border-white/10 divide-y divide-white/[0.08]">
+      {/* Editorial Services List */}
+      <div className="border-t border-neutral-200 divide-y divide-neutral-200/80">
         {displayServices.map((service, index) => {
           const stepNumber = String(index + 1).padStart(2, '0');
           const isHovered = hoveredIndex === index;
           const targetSlug = service.slug === 'ai-automation' || service.slug === 'ai-powered-products' ? 'ai-solutions' : service.slug;
-          const headingTitle = (service.category || service.title).toUpperCase();
+          const headingTitle = service.title;
 
           return (
             <motion.div
@@ -136,31 +136,31 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
               onClick={() => handleServiceClick(service)}
-              className={`group relative py-6 sm:py-12 px-2.5 sm:px-6 rounded-2xl transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 ${
-                isHovered ? 'bg-white/[0.025] backdrop-blur-md' : 'hover:bg-white/[0.015]'
+              className={`group relative py-6 sm:py-12 px-2.5 sm:px-6 rounded-2xl transition-all duration-300 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 ${
+                isHovered ? 'bg-neutral-50 shadow-2xs' : 'hover:bg-neutral-50/70'
               }`}
             >
               {/* Left Column: Number & Main Title */}
               <div className="flex items-start md:items-baseline gap-4 sm:gap-10">
-                <span className="text-xs sm:text-base font-mono font-bold text-neutral-500 group-hover:text-white transition-colors duration-300 pt-1 md:pt-0">
+                <span className="text-xs sm:text-base font-inter font-bold text-neutral-400 group-hover:text-neutral-950 transition-colors duration-300 pt-1 md:pt-0">
                   {stepNumber}
                 </span>
 
                 <div>
-                  <h3 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white group-hover:text-neutral-100 transition-colors duration-300">
+                  <h3 className="font-sora text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-neutral-950 group-hover:text-blue-600 transition-colors duration-300">
                     <a
                       href={`/services/${targetSlug}`}
                       onClick={(e) => {
                         e.preventDefault();
                         handleServiceClick(service);
                       }}
-                      className="hover:underline hover:decoration-white/40"
+                      className="hover:underline hover:decoration-blue-400"
                     >
                       {headingTitle}
                     </a>
                   </h3>
 
-                  <p className="text-xs sm:text-base text-neutral-400 max-w-xl mt-2 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-base text-neutral-600 max-w-xl mt-2 leading-relaxed font-inter font-normal">
                     {service.short_description}
                   </p>
 
@@ -169,7 +169,7 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
                     {service.technologies?.map((tech, tIdx) => (
                       <span
                         key={tIdx}
-                        className="text-[10px] sm:text-[11px] font-mono text-neutral-400 bg-white/[0.03] border border-white/[0.06] px-2 sm:px-2.5 py-0.5 rounded-full"
+                        className="text-[10px] sm:text-[11px] font-inter text-neutral-600 bg-white border border-neutral-200 px-2.5 py-0.5 rounded-full shadow-2xs"
                       >
                         {tech}
                       </span>
@@ -179,12 +179,12 @@ export function ServicesSection({ services, onSelectServiceCTA, onNavigate }: Se
               </div>
 
               {/* Right Column: Interaction Arrow & Action Indicator */}
-              <div className="flex items-center justify-between md:justify-end gap-4 pt-4 md:pt-0 border-t md:border-t-0 border-white/[0.04]">
-                <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 group-hover:text-white transition-colors">
+              <div className="flex items-center justify-between md:justify-end gap-4 pt-4 md:pt-0 border-t md:border-t-0 border-neutral-100">
+                <span className="text-xs font-inter font-medium uppercase tracking-wider text-neutral-500 group-hover:text-neutral-950 transition-colors">
                   View Service
                 </span>
 
-                <div className="w-10 h-10 rounded-full glass-pill flex items-center justify-center text-neutral-400 group-hover:text-black group-hover:bg-white transition-all duration-300 group-hover:scale-105 border border-white/10">
+                <div className="w-10 h-10 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-700 group-hover:text-white group-hover:bg-neutral-950 transition-all duration-300 group-hover:scale-105 shadow-2xs">
                   <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
               </div>

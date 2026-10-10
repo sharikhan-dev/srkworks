@@ -64,14 +64,15 @@ function setLocalData<T>(key: string, value: T): void {
   }
 }
 
-const SEED_FINGERPRINT_KEY = 'aura_seed_fingerprint_v2';
+const SEED_FINGERPRINT_KEY = 'srkworks_seed_fingerprint_v4';
 
 function computeSeedFingerprint(): string {
   try {
     const sStr = `${INITIAL_SITE_SETTINGS.name}:${INITIAL_SITE_SETTINGS.headline}:${INITIAL_SITE_SETTINGS.seo_title}:${INITIAL_SITE_SETTINGS.profile_image}:${INITIAL_SITE_SETTINGS.email}`;
-    const nStr = `${INITIAL_NAVBAR_SETTINGS.brand_name}:${INITIAL_NAVBAR_SETTINGS.logo_initial}`;
+    const nStr = `${INITIAL_NAVBAR_SETTINGS.brand_name}:${INITIAL_NAVBAR_SETTINGS.logo_initial}:${INITIAL_NAVBAR_SETTINGS.cta_text}`;
     const hStr = `${INITIAL_HERO_SETTINGS.eyebrow}:${INITIAL_HERO_SETTINGS.headline}:${INITIAL_HERO_SETTINGS.hero_image}`;
-    return `##${sStr}##${nStr}##${hStr}`;
+    const tStr = `${INITIAL_THEME_SETTINGS.background_color}:${INITIAL_THEME_SETTINGS.heading_font}`;
+    return `##${sStr}##${nStr}##${hStr}##${tStr}`;
   } catch {
     return 'default_fingerprint';
   }
@@ -86,14 +87,18 @@ export function syncWithSeedData(force = false) {
   const savedFingerprint = localStorage.getItem(SEED_FINGERPRINT_KEY);
 
   if (force || !savedFingerprint || savedFingerprint !== currentFingerprint) {
-    // 1. SETTINGS: If force or first time, load seed settings; if file changed, merge seed updates
+    // 1. SETTINGS: Load fresh seed settings, navbar, hero and theme
     if (force || !savedFingerprint) {
       setLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
       setLocalData(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
       setLocalData(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
+      setLocalData(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
     } else {
       const existingSettings = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
       setLocalData(STORAGE_KEYS.SETTINGS, { ...existingSettings, ...INITIAL_SITE_SETTINGS });
+      setLocalData(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
+      setLocalData(STORAGE_KEYS.HERO, INITIAL_HERO_SETTINGS);
+      setLocalData(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
     }
 
     // 2. Ensure other collections exist
@@ -170,9 +175,11 @@ export const db = {
       try {
         const { data, error } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
         if (!error && data) {
+          const cleanName = data.name?.toLowerCase().includes('sharik') ? 'SRKWorks' : data.name;
           const merged: SiteSettings = {
             ...INITIAL_SITE_SETTINGS,
             ...data,
+            name: cleanName || 'SRKWorks',
             hero_phrases: data.hero_phrases && data.hero_phrases.length > 0 ? data.hero_phrases : INITIAL_SITE_SETTINGS.hero_phrases
           };
           setLocalData(STORAGE_KEYS.SETTINGS, merged);
@@ -183,9 +190,11 @@ export const db = {
       }
     }
     const local = getLocalData<SiteSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
+    const cleanLocalName = local.name?.toLowerCase().includes('sharik') ? 'SRKWorks' : local.name;
     return {
       ...INITIAL_SITE_SETTINGS,
       ...local,
+      name: cleanLocalName || 'SRKWorks',
       hero_phrases: local.hero_phrases && local.hero_phrases.length > 0 ? local.hero_phrases : INITIAL_SITE_SETTINGS.hero_phrases
     };
   },
@@ -989,6 +998,13 @@ export const db = {
       try {
         const { data, error } = await supabase.from('theme_settings').select('*').limit(1).maybeSingle();
         if (!error && data) {
+          // If the stored theme is legacy dark theme, force migrate to the new white theme
+          if (data.background_color && (data.background_color === '#07080a' || data.background_color === '#090d16' || data.background_color === '#0d0d0d' || data.background_color === '#000000')) {
+            const upgraded = { ...INITIAL_THEME_SETTINGS, id: data.id || 'current_theme' };
+            await supabase.from('theme_settings').upsert([upgraded]);
+            setLocalData(STORAGE_KEYS.THEME, upgraded);
+            return upgraded;
+          }
           const merged = { ...INITIAL_THEME_SETTINGS, ...data };
           setLocalData(STORAGE_KEYS.THEME, merged);
           return merged;
@@ -997,7 +1013,12 @@ export const db = {
         console.warn('Supabase getThemeSettings error:', err);
       }
     }
-    return getLocalData<ThemeSettings>(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
+    const local = getLocalData<ThemeSettings>(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
+    if (local.background_color && (local.background_color === '#07080a' || local.background_color === '#090d16' || local.background_color === '#0d0d0d' || local.background_color === '#000000')) {
+      setLocalData(STORAGE_KEYS.THEME, INITIAL_THEME_SETTINGS);
+      return INITIAL_THEME_SETTINGS;
+    }
+    return local;
   },
 
   async updateThemeSettings(theme: Partial<ThemeSettings>): Promise<ThemeSettings> {
@@ -1055,7 +1076,26 @@ export const db = {
       try {
         const { data, error } = await supabase.from('navbar_settings').select('*').limit(1).maybeSingle();
         if (!error && data) {
-          const merged = { ...INITIAL_NAVBAR_SETTINGS, ...data };
+          const isLegacyBrand = data.brand_name?.toLowerCase().includes('sharik');
+          const isLegacyCta = data.cta_text?.toLowerCase().includes('talk');
+          const hasLegacyItems = data.nav_items?.some((i: any) => i.label === 'Clients' || i.label === 'Process');
+
+          const cleanBrand = isLegacyBrand ? 'SRKWorks' : data.brand_name;
+          const cleanCta = isLegacyCta ? "Let's connect" : data.cta_text;
+          const cleanItems = hasLegacyItems || !data.nav_items || data.nav_items.length === 0 ? INITIAL_NAVBAR_SETTINGS.nav_items : data.nav_items;
+
+          const merged: NavbarSettings = {
+            ...INITIAL_NAVBAR_SETTINGS,
+            ...data,
+            brand_name: cleanBrand,
+            cta_text: cleanCta,
+            nav_items: cleanItems
+          };
+
+          if (isLegacyBrand || isLegacyCta || hasLegacyItems) {
+            await supabase.from('navbar_settings').upsert([{ ...merged, id: data.id || 'current_navbar' }]);
+          }
+
           setLocalData(STORAGE_KEYS.NAVBAR, merged);
           return merged;
         }
@@ -1063,7 +1103,23 @@ export const db = {
         console.warn('Supabase getNavbarSettings error:', err);
       }
     }
-    return getLocalData<NavbarSettings>(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
+    const local = getLocalData<NavbarSettings>(STORAGE_KEYS.NAVBAR, INITIAL_NAVBAR_SETTINGS);
+    const isLegacyBrand = local.brand_name?.toLowerCase().includes('sharik');
+    const isLegacyCta = local.cta_text?.toLowerCase().includes('talk');
+    const hasLegacyItems = local.nav_items?.some((i: any) => i.label === 'Clients' || i.label === 'Process');
+
+    if (isLegacyBrand || isLegacyCta || hasLegacyItems) {
+      const fixed: NavbarSettings = {
+        ...local,
+        brand_name: isLegacyBrand ? 'SRKWorks' : local.brand_name,
+        cta_text: isLegacyCta ? "Let's connect" : local.cta_text,
+        nav_items: hasLegacyItems || !local.nav_items || local.nav_items.length === 0 ? INITIAL_NAVBAR_SETTINGS.nav_items : local.nav_items
+      };
+      setLocalData(STORAGE_KEYS.NAVBAR, fixed);
+      return fixed;
+    }
+
+    return local;
   },
 
   async updateNavbarSettings(navbar: Partial<NavbarSettings>): Promise<NavbarSettings> {

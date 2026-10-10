@@ -3,23 +3,24 @@
 @layer base {
   :root {
     /* Dynamic Theme CSS Variables controlled via CMS */
-    --primary: #ffffff;
-    --secondary: #a1a1aa;
-    --accent: #38bdf8;
-    --background: #07080a;
-    --surface: rgba(255, 255, 255, 0.025);
-    --surface-hover: rgba(255, 255, 255, 0.045);
-    --text: #ffffff;
-    --muted: #94a3b8;
-    --border: rgba(255, 255, 255, 0.08);
+    --primary: #0a0a0c;
+    --secondary: #4b5563;
+    --accent: #2563eb;
+    --background: #ffffff;
+    --surface: rgba(0, 0, 0, 0.025);
+    --surface-hover: rgba(0, 0, 0, 0.045);
+    --text: #0a0a0c;
+    --muted: #64748b;
+    --border: rgba(0, 0, 0, 0.08);
 
     /* Dynamic Typography CSS Variables */
-    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   html {
     scroll-behavior: smooth;
+    background-color: var(--background);
   }
 
   body {
@@ -35,12 +36,42 @@
   }
 
   ::selection {
-    background-color: rgba(255, 255, 255, 0.22);
-    color: #ffffff;
+    background-color: rgba(37, 99, 235, 0.18);
+    color: #1d4ed8;
   }
 }
 
-/* Glassmorphism & Liquid Glass Surfaces using CMS theme variables */
+/* Typography helper classes */
+.font-sora {
+  font-family: 'Sora', sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Figma Hero Gradient Accent for 'Experiences' */
+.hero-experiences-gradient {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 45%, #7aa8f8 85%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+/* Subtle architectural dot & grid backgrounds */
+.bg-grid-subtle {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+}
+
+.bg-dot-subtle {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Glassmorphism & Liquid Glass Surfaces */
 .glass-surface {
   background: var(--surface);
   backdrop-filter: blur(20px);
@@ -54,8 +85,8 @@
 
 .glass-surface-hover:hover {
   background: var(--surface-hover);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 24px 48px -18px rgba(0, 0, 0, 0.7);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06);
 }
 
 .glass-pill {
